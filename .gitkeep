@@ -1,0 +1,3 @@
+touch /vendor/.gitkeep
+touch /var/.gitkeep
+
