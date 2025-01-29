@@ -1,0 +1,15 @@
+
+lien : https://github.com/Mioty-Ifaliana/M-Esakafo
+
+MYSQL_DATABASE : railway
+MYSQL_PUBLIC_URL : mysql://root:szoqAjduWxCleyIjvvsGkvIjJIAoibYS@junction.proxy.rlwy.net:49915/railway
+MYSQL_ROOT_PASSWORD: szoqAjduWxCleyIjvvsGkvIjJIAoibYS
+MYSQL_URL :mysql://root:szoqAjduWxCleyIjvvsGkvIjJIAoibYS@mysql.railway.internal:3306/railway
+MYSQLDATABASE :railway
+MYSQLHOST:mysql.railway.internal
+MYSQLPASSWORD :szoqAjduWxCleyIjvvsGkvIjJIAoibYSMYSQLPORT
+MYSQLPORT :3306
+MYSQLUSER:root
+
+php bin/console doctrine:migrations:migrate
+php bin/console doctrine:migrations:diff
