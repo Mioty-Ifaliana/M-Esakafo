@@ -4,29 +4,34 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180, unique: true)]
+    #[ORM\Column(length: 255)]
     private ?string $email = null;
 
-    #[ORM\Column]
-    private array $roles = [];
+    #[ORM\Column(length: 255)]
+    private ?string $mot_de_passe = null;
 
     #[ORM\Column]
-    private ?string $password = null;
+    private ?bool $is_admin = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
     }
 
     public function getEmail(): ?string
@@ -37,40 +42,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+
         return $this;
     }
 
-    public function getUserIdentifier(): string
+    public function getMotDePasse(): ?string
     {
-        return (string) $this->email;
+        return $this->mot_de_passe;
     }
 
-    public function getRoles(): array
+    public function setMotDePasse(string $mot_de_passe): static
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-        return array_unique($roles);
-    }
+        $this->mot_de_passe = $mot_de_passe;
 
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
         return $this;
     }
 
-    public function getPassword(): string
+    public function isAdmin(): ?bool
     {
-        return $this->password;
+        return $this->is_admin;
     }
 
-    public function setPassword(string $password): static
+    public function setAdmin(bool $is_admin): static
     {
-        $this->password = $password;
+        $this->is_admin = $is_admin;
+
         return $this;
-    }
-
-    public function eraseCredentials(): void
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
     }
 }
