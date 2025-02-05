@@ -28,11 +28,18 @@ RUN composer global require symfony/flex
 # Vérifiez l'installation de Composer
 RUN composer --version
 
-# Installer les dépendances sans les dépendances de développement
-RUN composer install --no-dev
+# Installer les dépendances (sans l'option --no-dev pour voir si cela résout le problème)
+RUN composer install
 
 # Copier le reste des fichiers
 COPY . .
+
+# Définir les variables d'environnement
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+
+# Assurez-vous que le fichier bin/console est présent et exécutable
+RUN ls -l bin/ && chmod +x bin/console
 
 # Générer l'autoloader optimisé et exécuter les scripts
 RUN composer dump-autoload --optimize --no-dev && \
