@@ -19,6 +19,9 @@ COPY composer.json composer.lock ./
 # Autoriser les plugins Composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+# Configurer Composer pour autoriser les plugins
+RUN composer global config --no-plugins allow-plugins.symfony/flex true
+
 # Installer Symfony Flex globalement
 RUN composer global require symfony/flex
 
