@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\IngredientRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: IngredientRepository::class)]
 class Ingredient
@@ -11,16 +12,20 @@ class Ingredient
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['ingredient:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['ingredient:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['ingredient:read'])]
     private ?string $sprite = null;
 
     #[ORM\ManyToOne(targetEntity: Unite::class)]
     #[ORM\JoinColumn(name: "id_unite", referencedColumnName: "id", nullable: false)]
+    #[Groups(['ingredient:read'])]
     private ?Unite $unite = null;
 
     public function getId(): ?int
