@@ -16,7 +16,16 @@ WORKDIR /app
 # Copier composer.json et composer.lock d'abord
 COPY composer.json composer.lock ./
 
-# Installer les dépendances
+# Autoriser les plugins Composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Installer Symfony Flex globalement
+RUN composer global require symfony/flex
+
+# Vérifiez l'installation de Composer
+RUN composer --version
+
+# Installer les dépendances sans les dépendances de développement
 RUN composer install --no-dev
 
 # Copier le reste des fichiers
@@ -38,9 +47,6 @@ EXPOSE 8000
 
 # Vérifiez le fichier autoload_runtime.php
 RUN test -f vendor/autoload_runtime.php || (echo "autoload_runtime.php not found" && exit 1)
-
-# Autoriser les plugins Composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Lancer le serveur PHP
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
