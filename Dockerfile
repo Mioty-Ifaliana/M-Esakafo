@@ -1,62 +1,63 @@
 # Utiliser PHP 8.2.12 CLI
 FROM php:8.2.12-cli
 
-# Installer les dépendances nécessaires
+# Installer les dépendances système nécessaires
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev \
+    zip \
+    unzip \
+    git \
+    curl \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql opcache
+    && docker-php-ext-install -j$(nproc) \
+        gd \
+        pdo \
+        pdo_mysql \
+        opcache \
+        zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Installer Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configuration de Composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_HOME=/composer
+ENV PATH="${PATH}:/composer/vendor/bin"
 
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Copier composer.json et composer.lock d'abord
+# Copier les fichiers de configuration de Composer
 COPY composer.json composer.lock ./
 
-# Autoriser les plugins Composer
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Installer Symfony Flex
+RUN composer global require "symfony/flex" --prefer-dist --no-progress --no-suggest --classmap-authoritative
 
-# Configurer Composer pour autoriser les plugins
-RUN composer global config --no-plugins allow-plugins.symfony/flex true
+# Installer les dépendances sans les scripts
+RUN composer install --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --optimize-autoloader
 
-# Installer Symfony Flex globalement
-RUN composer global require symfony/flex
-
-# Vérifiez l'installation de Composer
-RUN composer --version
-
-# Installer les dépendances (sans l'option --no-dev pour voir si cela résout le problème)
-RUN composer install
-
-# Copier le reste des fichiers
+# Copier le reste des fichiers du projet
 COPY . .
 
-# Définir les variables d'environnement
+# Configuration de l'environnement
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
-# Assurez-vous que le fichier bin/console est présent et exécutable
-RUN ls -l bin/ && chmod +x bin/console
+# Permissions et configuration finale
+RUN mkdir -p var/cache var/log \
+    && chmod -R 777 var \
+    && chmod +x bin/console \
+    && composer dump-autoload --optimize --no-dev --classmap-authoritative \
+    && composer run-script --no-dev post-install-cmd \
+    && php bin/console cache:clear --env=prod --no-debug
 
-# Générer l'autoloader optimisé et exécuter les scripts
-RUN composer dump-autoload --optimize --no-dev && \
-    composer run-script post-install-cmd
-
-# Créer le dossier var et modifier ses permissions
-RUN mkdir -p var && chmod -R 755 var && \
-    chmod -R 755 vendor
-
-# Nettoyer le cache APT
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Exposer le port 8000
+# Exposer le port
 EXPOSE 8000
 
-# Vérifiez le fichier autoload_runtime.php
-RUN test -f vendor/autoload_runtime.php || (echo "autoload_runtime.php not found" && exit 1)
-
-# Lancer le serveur PHP
+# Commande par défaut
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
