@@ -21,7 +21,7 @@ services:
       - "../src/Entity/"
       - "../src/Kernel.php"
 
-  App\Service\JwtTokenManager:
+  App\Security\JwtTokenManager:
     arguments:
       $secretKey: "%jwt_secret%"
 

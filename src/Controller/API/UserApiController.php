@@ -6,7 +6,7 @@ use App\Annotation\TokenRequired;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\DeleteService;
-use App\Service\JwtTokenManager;
+use App\Security\JwtTokenManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

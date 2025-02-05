@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: m-esakafo-web
+    env: php
+    buildCommand: composer install
+    startCommand: php -S 0.0.0.0:$PORT -t public/
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

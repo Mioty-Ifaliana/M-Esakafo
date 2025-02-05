@@ -3,7 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Commande;
-use App\Repository\CommmandeRepository;
+use App\Repository\CommandeRepository;
+use App\Service\CommandeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,16 +14,27 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Requirement\Requirement;
 
-class PlatController extends AbstractController
+#[Route('/api/commandes', name: 'api_commandes_')]
+class CommandeController extends AbstractController
 {
-    #[Route('/', name: 'create', methods: ['POST'])]
+    private CommandeService $commandeService;
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(
+        CommandeService $commandeService,
+        EntityManagerInterface $entityManager
+    ) {
+        $this->commandeService = $commandeService;
+        $this->entityManager = $entityManager;
+    }
+
+    #[Route('', name: 'create', methods: ['POST'])]
     public function create(
-        #[MapRequestPayload] Commande $plat, 
-        EntityManagerInterface $entityManager): JsonResponse{
+        #[MapRequestPayload] Commande $commande
+    ): JsonResponse {
+        $this->entityManager->persist($commande);
+        $this->entityManager->flush();
 
-        $entityManager->persist($plat);
-        $entityManager->flush();
-
-        return $this->json($plat, Response::HTTP_CREATED);
+        return $this->json($commande, Response::HTTP_CREATED);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace App\Security;
 
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
@@ -30,10 +30,11 @@ class JwtTokenManager
             ->issuedBy('your-app') // émetteur
             ->permittedFor('your-client') // destinataire
             ->issuedAt($now) // date d'émission
+            ->canOnlyBeUsedAfter($now)
             ->expiresAt($now->modify("+$expirationInSeconds seconds")); // date d'expiration
 
         foreach ($claims as $key => $value) {
-            $builder->withClaim($key, $value);
+            $builder = $builder->withClaim($key, $value);
         }
 
         return $builder->getToken($this->config->signer(), $this->config->signingKey());
