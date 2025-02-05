@@ -10,35 +10,33 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Requirement\Requirement;
 
-#[Route('/api/plats', name: 'api_plats_')]
+
+
+// #[Route('/api/plats', name: 'api_plats_')]
 class PlatController extends AbstractController
 {
-    #[Route('/', name: 'list', methods: ['GET'])]
-    public function list(PlatRepository $platRepository): JsonResponse
+    #[Route('/plat', name: 'list', methods: ['GET'])]
+    public function list(PlatRepository $platRepository): Response
     {
         $plats = $platRepository->getAllPlats();
-        return $this->json($plats);
+        return $this->render('plats/index.html.twig', [
+            'plats' => $plats
+        ]);
     }
 
-    #[Route('/{id}', name: 'get', methods: ['GET'])]
+    #[Route('/{id}', name: 'get', methods: ['GET'] , requirements: ['id' => Requirement::DIGITS])]
     public function get(Plat $plat): JsonResponse
     {
         return $this->json($plat);
     }
 
     #[Route('/', name: 'create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-        
-        $plat = new Plat();
-        $plat->setNom($data['nom']);
-        $plat->setSprite($data['sprite']);
-        if (isset($data['temps_cuisson'])) {
-            $plat->setTempsCuisson(new \DateTime($data['temps_cuisson']));
-        }
-        $plat->setPrix($data['prix']);
+    public function create(
+        #[MapRequestPayload] Plat $plat, 
+        EntityManagerInterface $entityManager): JsonResponse{
 
         $entityManager->persist($plat);
         $entityManager->flush();
@@ -68,6 +66,8 @@ class PlatController extends AbstractController
 
         return $this->json($plat);
     }
+
+
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(Plat $plat, EntityManagerInterface $entityManager): JsonResponse

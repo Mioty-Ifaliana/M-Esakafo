@@ -40,4 +40,10 @@ class CommandeRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    public function getAllCommande(): array {
+        return $this->createQueryBuilder('c')
+            ->getQuery()
+            ->getResult();
+    }
 }

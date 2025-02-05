@@ -1,26 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}M-Esakafo | Accueil{% endblock %}
+{% block title "Mon projet | Bienvenue" %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1 class="mb-4">Nos Plats</h1>
-        
-        <div class="row">
-            {% for plat in plats %}
-                <div class="col-md-3 mb-4">
-                    <div class="card">
-                        <img src="{{ asset('images/' ~ plat.sprite) }}" class="card-img-top" alt="{{ plat.nom }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ plat.nom }}</h5>
-                            <p class="card-text">
-                                Prix: {{ plat.prix }}€<br>
-                                Temps de cuisson: {{ plat.tempsCuisson ? plat.tempsCuisson|date('H:i') : 'N/A' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+    <div class="hero bg-primary text-white d-flex align-items-center" style="height: 100vh;">
+        <div class="container text-center">
+            <h1 class="display-4">Bienvenue sur mon projet</h1>
+            <p class="lead">Découvrez notre plateforme innovante qui vous aide à transformer vos idées en réalité.</p>
+            <a href="{{ url('list') }}" class="btn btn-light btn-lg mt-4">Voir la liste des taches</a>
         </div>
     </div>
 {% endblock %}
