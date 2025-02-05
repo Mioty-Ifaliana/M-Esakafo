@@ -19,23 +19,32 @@ class PlatController extends AbstractController
     {
         $plats = $platRepository->getAllPlats();
         
-        // Transform the Plat objects into arrays
-        $platsArray = array_map(function($plat) {
+        $platsArray = array_values(array_filter(array_map(function($plat) {
+            if (!$plat || !$plat->getId() || !$plat->getNom()) {
+                return null;
+            }
+            
             return [
                 'id' => $plat->getId(),
                 'nom' => $plat->getNom(),
-                'sprite' => $plat->getSprite(),
-                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
-                'prix' => $plat->getPrix()
+                'sprite' => $plat->getSprite() ? trim($plat->getSprite()) : 'brochette.jpg',
+                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : '00:05:00',
+                'prix' => $plat->getPrix() ? $plat->getPrix() : '0.00'
             ];
-        }, $plats);
+        }, $plats)));
+
+        // Create a new JsonResponse with the array
+        $response = new JsonResponse($platsArray);
         
-        $response = $this->json($platsArray);
-        
-        // Ajouter les headers CORS
+        // Add CORS headers
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+        
+        // Disable debug output
+        if (function_exists('dump')) {
+            ob_clean();
+        }
         
         return $response;
     }
