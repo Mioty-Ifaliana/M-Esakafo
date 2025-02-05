@@ -1,33 +1,23 @@
-# Utiliser PHP 8.2 avec Apache
-FROM php:8.2-apache
+# Utiliser PHP 8.2.12 CLI
+FROM php:8.2.12-cli
 
-# Installer les dépendances système
+# Installer les dépendances nécessaires
 RUN apt-get update && apt-get install -y \
-    git \
-    zip \
-    unzip \
-    libpq-dev
-
-# Installer les extensions PHP nécessaires
-RUN docker-php-ext-install pdo pdo_mysql
-
-# Installer Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Configurer Apache
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-RUN a2enmod rewrite
+    zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql opcache
 
 # Définir le répertoire de travail
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Copier les fichiers du projet
+# Copier tous les fichiers du projet dans /app
 COPY . .
 
-# Installer les dépendances
-RUN composer install --no-dev --optimize-autoloader
+# Créer le dossier var et modifier ses permissions
+RUN mkdir -p var && chmod -R 777 var
 
-# Donner les bonnes permissions
-RUN chown -R www-data:www-data /var/www/html
+# Exposer le port 8000 (juste à titre indicatif, Render le gère automatiquement)
+EXPOSE 8000
+
+# Lancer le serveur PHP et pointer vers public/
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]

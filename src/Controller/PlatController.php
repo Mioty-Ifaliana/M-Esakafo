@@ -10,22 +10,29 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/plats', name: 'api_plats_')]
 class PlatController extends AbstractController
 {
-    public function __construct(
-        private SerializerInterface $serializer
-    ) {}
-
-    #[Route('/', name: 'list', methods: ['GET'])]
+    #[Route('', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
         $plats = $platRepository->getAllPlats();
-        $json = $this->serializer->serialize($plats, 'json', ['groups' => ['plat:read']]);
         
-        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
+        // Transform the Plat objects into arrays
+        $platsArray = array_map(function($plat) {
+            return [
+                'id' => $plat->getId(),
+                'nom' => $plat->getNom(),
+                'sprite' => $plat->getSprite(),
+                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+                'prix' => $plat->getPrix()
+            ];
+        }, $plats);
+        
+        $response = $this->json($platsArray);
+        
+        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -34,11 +41,23 @@ class PlatController extends AbstractController
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
-    public function get(Plat $plat): JsonResponse
+    public function get($id, PlatRepository $platRepository): JsonResponse
     {
-        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
+        $plat = $platRepository->find($id);
         
-        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
+        if (!$plat) {
+            return $this->json(['error' => 'Plat not found'], 404);
+        }
+        
+        $response = $this->json([
+            'id' => $plat->getId(),
+            'nom' => $plat->getNom(),
+            'sprite' => $plat->getSprite(),
+            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+            'prix' => $plat->getPrix()
+        ]);
+        
+        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -46,7 +65,7 @@ class PlatController extends AbstractController
         return $response;
     }
 
-    #[Route('/', name: 'create', methods: ['POST'])]
+    #[Route('', name: 'create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -54,17 +73,25 @@ class PlatController extends AbstractController
         $plat = new Plat();
         $plat->setNom($data['nom']);
         $plat->setSprite($data['sprite']);
-        if (isset($data['temps_cuisson'])) {
-            $plat->setTempsCuisson(new \DateTime($data['temps_cuisson']));
-        }
         $plat->setPrix($data['prix']);
-
+        
+        if (isset($data['tempsCuisson'])) {
+            $tempsCuisson = new \DateTime($data['tempsCuisson']);
+            $plat->setTempsCuisson($tempsCuisson);
+        }
+        
         $entityManager->persist($plat);
         $entityManager->flush();
-
-        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
         
-        $response = new JsonResponse($json, Response::HTTP_CREATED, [], true);
+        $response = $this->json([
+            'id' => $plat->getId(),
+            'nom' => $plat->getNom(),
+            'sprite' => $plat->getSprite(),
+            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+            'prix' => $plat->getPrix()
+        ], 201);
+        
+        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -92,9 +119,9 @@ class PlatController extends AbstractController
 
         $entityManager->flush();
 
-        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
+        $response = $this->json($plat);
         
-        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
+        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -108,7 +135,9 @@ class PlatController extends AbstractController
         $entityManager->remove($plat);
         $entityManager->flush();
 
-        $response = new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        $response = $this->json(null, Response::HTTP_NO_CONTENT);
+        
+        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
