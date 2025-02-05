@@ -22,12 +22,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 # Configuration de Composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_HOME=/composer
-ENV PATH="${PATH}:/composer/vendor/bin"
 
 # Définir le répertoire de travail
 WORKDIR /app
@@ -35,11 +34,12 @@ WORKDIR /app
 # Copier les fichiers de configuration de Composer
 COPY composer.json composer.lock ./
 
-# Installer Symfony Flex
-RUN composer global require "symfony/flex" --prefer-dist --no-progress --no-suggest --classmap-authoritative
+# Configurer Composer pour autoriser les plugins
+RUN composer config --no-plugins allow-plugins.symfony/flex true \
+    && composer config --no-plugins allow-plugins.symfony/runtime true
 
-# Installer les dépendances sans les scripts
-RUN composer install --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --optimize-autoloader
+# Installer les dépendances
+RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-scripts
 
 # Copier le reste des fichiers du projet
 COPY . .
@@ -49,12 +49,12 @@ ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
 # Permissions et configuration finale
-RUN mkdir -p var/cache var/log \
-    && chmod -R 777 var \
-    && chmod +x bin/console \
-    && composer dump-autoload --optimize --no-dev --classmap-authoritative \
-    && composer run-script --no-dev post-install-cmd \
-    && php bin/console cache:clear --env=prod --no-debug
+RUN set -eux; \
+    mkdir -p var/cache var/log; \
+    composer dump-autoload --optimize --no-dev --classmap-authoritative; \
+    chmod -R 777 var; \
+    chmod +x bin/console; \
+    sync
 
 # Exposer le port
 EXPOSE 8000
