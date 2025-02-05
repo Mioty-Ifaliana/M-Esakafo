@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PlatRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PlatRepository::class)]
 #[ORM\Table(name: 'plats')]
@@ -13,18 +14,23 @@ class Plat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['plat:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
+    #[Groups(['plat:read'])]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
+    #[Groups(['plat:read'])]
     private ?string $sprite = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[Groups(['plat:read'])]
     private ?\DateTimeInterface $tempsCuisson = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Groups(['plat:read'])]
     private ?string $prix = null;
 
     public function getId(): ?int

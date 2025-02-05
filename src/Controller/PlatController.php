@@ -10,29 +10,22 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/plats', name: 'api_plats_')]
 class PlatController extends AbstractController
 {
+    public function __construct(
+        private SerializerInterface $serializer
+    ) {}
+
     #[Route('/', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
         $plats = $platRepository->getAllPlats();
+        $json = $this->serializer->serialize($plats, 'json', ['groups' => ['plat:read']]);
         
-        // Transform the Plat objects into arrays
-        $platsArray = array_map(function($plat) {
-            return [
-                'id' => $plat->getId(),
-                'nom' => $plat->getNom(),
-                'sprite' => $plat->getSprite(),
-                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
-                'prix' => $plat->getPrix()
-            ];
-        }, $plats);
-        
-        $response = $this->json($platsArray);
-        
-        // Ajouter les headers CORS
+        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -43,9 +36,9 @@ class PlatController extends AbstractController
     #[Route('/{id}', name: 'get', methods: ['GET'])]
     public function get(Plat $plat): JsonResponse
     {
-        $response = $this->json($plat);
+        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
         
-        // Ajouter les headers CORS
+        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -69,9 +62,9 @@ class PlatController extends AbstractController
         $entityManager->persist($plat);
         $entityManager->flush();
 
-        $response = $this->json($plat, Response::HTTP_CREATED);
+        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
         
-        // Ajouter les headers CORS
+        $response = new JsonResponse($json, Response::HTTP_CREATED, [], true);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -99,9 +92,9 @@ class PlatController extends AbstractController
 
         $entityManager->flush();
 
-        $response = $this->json($plat);
+        $json = $this->serializer->serialize($plat, 'json', ['groups' => ['plat:read']]);
         
-        // Ajouter les headers CORS
+        $response = new JsonResponse($json, Response::HTTP_OK, [], true);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
@@ -115,9 +108,7 @@ class PlatController extends AbstractController
         $entityManager->remove($plat);
         $entityManager->flush();
 
-        $response = $this->json(null, Response::HTTP_NO_CONTENT);
-        
-        // Ajouter les headers CORS
+        $response = new JsonResponse(null, Response::HTTP_NO_CONTENT);
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
