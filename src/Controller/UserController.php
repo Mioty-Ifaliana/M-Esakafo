@@ -107,4 +107,38 @@ class UserController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
     }
+
+    #[Route('/count-clients', methods: ['GET'])]
+    public function countClients(Request $request): JsonResponse
+    {
+        try {
+            $token = $request->headers->get('Authorization');
+            
+            if (!$token) {
+                return $this->json([
+                    'status' => 'error',
+                    'message' => 'Token manquant'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            $users = $this->firebaseService->listUsers($token);
+            
+            // Filtrer pour exclure admin@gmail.com et compter
+            $clientCount = count(array_filter($users, function($user) {
+                return $user['email'] !== 'admin@gmail.com';
+            }));
+
+            return $this->json([
+                'status' => 'success',
+                'data' => [
+                    'total_clients' => $clientCount
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+    }
 }
