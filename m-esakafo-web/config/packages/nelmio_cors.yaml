@@ -6,7 +6,7 @@ nelmio_cors:
         allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Custom-Auth']
         expose_headers: ['Link', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'X-Total-Count']
         max_age: 3600
-        allow_credentials: false
+        allow_credentials: true
     paths:
         '^/api/': 
             origin_regex: true
@@ -15,4 +15,4 @@ nelmio_cors:
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
             expose_headers: ['Link', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset', 'X-Total-Count']
             max_age: 3600
-            allow_credentials: false
+            allow_credentials: true
