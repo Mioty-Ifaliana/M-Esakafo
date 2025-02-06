@@ -40,7 +40,16 @@ class CommandeController extends AbstractController
     private function createSortieIngredients(int $platId, int $quantiteCommande): void
     {
         // Récupérer la recette du plat
-        $recettes = $this->recetteRepository->findBy(['platId' => $platId]);
+        $plat = $this->platRepository->find($platId);
+        if (!$plat) {
+            throw new \Exception("Plat non trouvé");
+        }
+
+        $recettes = $this->recetteRepository->findBy(['plat' => $plat]);
+        
+        if (empty($recettes)) {
+            throw new \Exception("Aucune recette trouvée pour ce plat");
+        }
         
         foreach ($recettes as $recette) {
             // Calculer la quantité totale nécessaire
