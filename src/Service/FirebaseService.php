@@ -39,7 +39,7 @@ class FirebaseService
 
     public function listAllUsers() {
         try {
-            $response = $this->httpClient->request('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:lookup', [
+            $response = $this->httpClient->request('GET', 'https://identitytoolkit.googleapis.com/v1/accounts', [
                 'query' => [
                     'key' => $this->apiKey
                 ]
@@ -48,6 +48,7 @@ class FirebaseService
             $data = $response->toArray();
             return $data['users'] ?? [];
         } catch (\Exception $e) {
+            error_log('Erreur lors de la récupération des utilisateurs: ' . $e->getMessage());
             throw new \Exception('Erreur lors de la récupération des utilisateurs: ' . $e->getMessage());
         }
     }
