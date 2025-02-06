@@ -153,6 +153,60 @@ class CommandeController extends AbstractController
         }
     }
 
+    #[Route('/ventes-totales', name: 'api_commandes_ventes_totales', methods: ['GET'])]
+    public function getVentesTotales(CommandeRepository $commandeRepository): JsonResponse
+    {
+        try {
+            $ventesParPlat = $commandeRepository->getTotalVentesParPlat();
+            
+            // Calculer le total général
+            $totalGeneral = array_reduce($ventesParPlat, function($carry, $item) {
+                return $carry + $item['totalVentes'];
+            }, 0);
+            
+            // Formater les données pour inclure des statistiques supplémentaires
+            $ventesFormatees = array_map(function($vente) use ($totalGeneral) {
+                return [
+                    'plat' => [
+                        'id' => $vente['platId'],
+                        'nom' => $vente['platNom'],
+                        'prix_unitaire' => $vente['platPrix']
+                    ],
+                    'statistiques' => [
+                        'quantite_vendue' => (int)$vente['totalQuantite'],
+                        'montant_total' => (float)$vente['totalVentes'],
+                        'pourcentage_total' => $totalGeneral > 0 
+                            ? round(($vente['totalVentes'] / $totalGeneral) * 100, 2)
+                            : 0
+                    ]
+                ];
+            }, $ventesParPlat);
+            
+            $response = $this->json([
+                'success' => true,
+                'data' => [
+                    'ventes_par_plat' => $ventesFormatees,
+                    'total_general' => $totalGeneral,
+                    'nombre_plats_vendus' => count($ventesParPlat)
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors du calcul des ventes:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $response = $this->json([
+                'success' => false,
+                'error' => 'Erreur lors du calcul des ventes',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+        
+        return $this->corsResponse($response);
+    }
+
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
     public function options(): Response
     {
