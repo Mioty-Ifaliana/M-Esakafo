@@ -87,12 +87,15 @@ class CommandeController extends AbstractController
             return [];
         }
 
+        $plat = $commande->getPlat();
         return [
             'id' => $commande->getId(),
             'userId' => $commande->getUserId(),
             'plat' => [
-                'id' => $commande->getPlatId(),
-                'nom' => $commande->getPlat() ? $commande->getPlat()->getNom() : null,
+                'id' => $plat ? $plat->getId() : null,
+                'nom' => $plat ? $plat->getNom() : null,
+                'sprite' => $plat ? $plat->getSprite() : null,
+                'tempsCuisson' => $plat && $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
             ],
             'quantite' => $commande->getQuantite(),
             'numeroTicket' => $commande->getNumeroTicket(),
