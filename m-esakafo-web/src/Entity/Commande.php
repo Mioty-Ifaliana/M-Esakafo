@@ -15,8 +15,8 @@ class Commande
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $userId = null;
+    #[ORM\Column(length: 255)]
+    private ?string $userId = null;
 
     #[ORM\Column]
     private ?int $platId = null;
@@ -38,12 +38,12 @@ class Commande
         return $this->id;
     }
 
-    public function getUserId(): ?int
+    public function getUserId(): ?string
     {
         return $this->userId;
     }
 
-    public function setUserId(int $userId): static
+    public function setUserId(string $userId): static
     {
         $this->userId = $userId;
         return $this;

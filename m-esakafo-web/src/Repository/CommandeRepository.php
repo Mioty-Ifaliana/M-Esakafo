@@ -21,7 +21,7 @@ class CommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, Commande::class);
     }
 
-    public function createNewCommande(int $userId, int $platId, int $quantite): Commande
+    public function createNewCommande(string $userId, int $platId, int $quantite): Commande
     {
         $commande = new Commande();
         
