@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\CommandeRepository;
+use App\Repository\PlatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,10 +14,12 @@ use Psr\Log\LoggerInterface;
 class CommandeController extends AbstractController
 {
     private $logger;
+    private $platRepository;
 
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, PlatRepository $platRepository)
     {
         $this->logger = $logger;
+        $this->platRepository = $platRepository;
     }
 
     private function addCorsHeaders(JsonResponse $response): JsonResponse
@@ -26,6 +29,49 @@ class CommandeController extends AbstractController
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
         return $response;
+    }
+
+    private function formatCommandeDetails($commande): array
+    {
+        $plat = $this->platRepository->find($commande->getPlatId());
+        
+        return [
+            'id' => $commande->getId(),
+            'userId' => $commande->getUserId(),
+            'plat' => $plat ? [
+                'id' => $plat->getId(),
+                'nom' => $plat->getNom(),
+                'sprite' => $plat->getSprite(),
+                'prix' => $plat->getPrix(),
+                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
+            ] : null,
+            'quantite' => $commande->getQuantite(),
+            'numero_ticket' => $commande->getNumeroTicket(),
+            'statut' => $commande->getStatut(),
+            'date_commande' => $commande->getDateCommande()->format('Y-m-d H:i:s')
+        ];
+    }
+
+    #[Route('/pending', name: 'api_commandes_pending', methods: ['GET'])]
+    public function getPendingCommands(CommandeRepository $commandeRepository): JsonResponse
+    {
+        try {
+            $commandes = $commandeRepository->findPendingCommands();
+            $response = $this->json(array_map(
+                [$this, 'formatCommandeDetails'],
+                $commandes
+            ));
+        } catch (\Exception $e) {
+            $this->logger->error('Error fetching pending orders: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            $response = $this->json([
+                'error' => 'An error occurred while fetching pending orders',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        return $this->addCorsHeaders($response);
     }
 
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
@@ -53,24 +99,16 @@ class CommandeController extends AbstractController
                     $data['quantite']
                 );
                 
-                $response = $this->json([
-                    'id' => $commande->getId(),
-                    'userId' => $commande->getUserId(),
-                    'platId' => $commande->getPlatId(),
-                    'quantite' => $commande->getQuantite(),
-                    'numero_ticket' => $commande->getNumeroTicket(),
-                    'statut' => $commande->getStatut(),
-                    'date_commande' => $commande->getDateCommande()->format('Y-m-d H:i:s')
-                ]);
+                $response = $this->json($this->formatCommandeDetails($commande));
                 
             } catch (\Exception $e) {
-                // Log the exception message and details
                 $this->logger->error('Error creating order: ' . $e->getMessage(), [
                     'exception' => $e,
                     'data' => $data,
                 ]);
                 $response = $this->json([
-                    'error' => 'An error occurred while creating the order'
+                    'error' => 'An error occurred while creating the order',
+                    'message' => $e->getMessage()
                 ], 500);
             }
         }

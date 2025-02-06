@@ -42,4 +42,14 @@ class CommandeRepository extends ServiceEntityRepository
         
         return $commande;
     }
+
+    public function findPendingCommands(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('statut', 0)
+            ->orderBy('c.dateCommande', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
