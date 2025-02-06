@@ -45,7 +45,7 @@ class CommandeRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.statut = :statut')
             ->setParameter('statut', 0)
-            ->orderBy('c.dateCommande', 'ASC')
+            ->orderBy('c.date_commande', 'ASC')
             ->getQuery()
             ->getResult();
     }
