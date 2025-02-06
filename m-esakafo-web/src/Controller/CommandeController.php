@@ -97,7 +97,7 @@ class CommandeController extends AbstractController
             'quantite' => $commande->getQuantite(),
             'numeroTicket' => $commande->getNumeroTicket(),
             'statut' => $commande->getStatut(),
-            'dateCommande' => $commande->getDateCommande() ? $commande->getDateCommande()->format('Y-m-d H:i:s') : null
+            'date_commande' => $commande->getDateCommande() ? $commande->getDateCommande()->format('Y-m-d H:i:s') : null
         ];
     }
 
