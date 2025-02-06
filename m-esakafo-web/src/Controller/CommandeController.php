@@ -83,22 +83,21 @@ class CommandeController extends AbstractController
 
     private function formatCommandeDetails($commande): array
     {
-        $plat = $this->platRepository->find($commande->getPlatId());
-        
+        if (!$commande) {
+            return [];
+        }
+
         return [
             'id' => $commande->getId(),
             'userId' => $commande->getUserId(),
-            'plat' => $plat ? [
-                'id' => $plat->getId(),
-                'nom' => $plat->getNom(),
-                'sprite' => $plat->getSprite(),
-                'prix' => $plat->getPrix(),
-                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
-            ] : null,
+            'plat' => [
+                'id' => $commande->getPlatId(),
+                'nom' => $commande->getPlat() ? $commande->getPlat()->getNom() : null,
+            ],
             'quantite' => $commande->getQuantite(),
-            'numero_ticket' => $commande->getNumeroTicket(),
+            'numeroTicket' => $commande->getNumeroTicket(),
             'statut' => $commande->getStatut(),
-            'date_commande' => $commande->getDateCommande()->format('Y-m-d H:i:s')
+            'dateCommande' => $commande->getDateCommande() ? $commande->getDateCommande()->format('Y-m-d H:i:s') : null
         ];
     }
 
@@ -106,22 +105,39 @@ class CommandeController extends AbstractController
     public function getPendingCommands(CommandeRepository $commandeRepository): JsonResponse
     {
         try {
+            $this->logger->info('Fetching pending commands...');
+            
             $commandes = $commandeRepository->findPendingCommands();
-            $response = $this->json(array_map(
+            
+            if (!is_array($commandes) && !$commandes instanceof \Traversable) {
+                throw new \RuntimeException('Invalid response from repository');
+            }
+
+            $formattedCommandes = array_map(
                 [$this, 'formatCommandeDetails'],
-                $commandes
-            ));
+                is_array($commandes) ? $commandes : iterator_to_array($commandes)
+            );
+
+            $this->logger->info('Successfully fetched pending commands', [
+                'count' => count($formattedCommandes)
+            ]);
+
+            $response = new JsonResponse($formattedCommandes);
+            return $this->addCorsHeaders($response);
+
         } catch (\Exception $e) {
             $this->logger->error('Error fetching pending orders: ' . $e->getMessage(), [
-                'exception' => $e
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
             ]);
-            $response = $this->json([
+
+            $response = new JsonResponse([
                 'error' => 'An error occurred while fetching pending orders',
                 'message' => $e->getMessage()
             ], 500);
-        }
 
-        return $this->addCorsHeaders($response);
+            return $this->addCorsHeaders($response);
+        }
     }
 
     #[Route('/check-user-orders/{uid}', name: 'api_check_user_orders', methods: ['GET'])]
