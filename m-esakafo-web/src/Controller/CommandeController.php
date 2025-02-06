@@ -180,12 +180,22 @@ class CommandeController extends AbstractController
             // Log des données reçues
             $this->logger->info('Données reçues:', ['data' => $data]);
             
+            // Validation des champs requis
             if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
                 $response = $this->json([
                     'success' => false,
                     'error' => 'Missing required fields',
                     'required' => ['userId', 'platId', 'quantite', 'numeroTicket'],
                     'received' => $data
+                ], 400);
+                return $this->corsResponse($response);
+            }
+
+            // Validation de la quantité
+            if (!is_numeric($data['quantite']) || $data['quantite'] <= 0) {
+                $response = $this->json([
+                    'success' => false,
+                    'error' => 'La quantité doit être un nombre positif'
                 ], 400);
                 return $this->corsResponse($response);
             }
@@ -214,6 +224,12 @@ class CommandeController extends AbstractController
                 // Créer les mouvements de sortie des ingrédients
                 $this->createSortieIngredients($data['platId'], $data['quantite']);
             } catch (\Exception $e) {
+                $this->logger->error('Erreur lors de la création des mouvements:', [
+                    'platId' => $data['platId'],
+                    'quantite' => $data['quantite'],
+                    'error' => $e->getMessage()
+                ]);
+                
                 $response = $this->json([
                     'success' => false,
                     'error' => 'Erreur lors de la création des mouvements',
@@ -230,6 +246,13 @@ class CommandeController extends AbstractController
                 $data['numeroTicket']
             );
             
+            // Log du succès
+            $this->logger->info('Commande créée avec succès:', [
+                'commandeId' => $commande->getId(),
+                'userId' => $data['userId'],
+                'platId' => $data['platId']
+            ]);
+            
             $response = $this->json([
                 'success' => true,
                 'data' => $this->formatCommandeDetails($commande)
@@ -243,7 +266,8 @@ class CommandeController extends AbstractController
             $response = $this->json([
                 'success' => false,
                 'error' => 'An error occurred while creating the order',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'details' => $this->isDev() ? $e->getTrace() : null
             ], 500);
         }
 
@@ -279,5 +303,10 @@ class CommandeController extends AbstractController
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         $response->headers->set('Access-Control-Max-Age', '3600');
         return $response;
+    }
+
+    private function isDev(): bool
+    {
+        return in_array($this->getParameter('kernel.environment'), ['dev', 'test']);
     }
 }
