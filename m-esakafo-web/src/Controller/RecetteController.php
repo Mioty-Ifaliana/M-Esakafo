@@ -72,16 +72,35 @@ class RecetteController extends AbstractController
         try {
             $recettes = $recetteRepository->findByPlatId($platId);
             $response = $this->json(array_map(function($recette) {
+                $plat = $recette->getPlat();
+                $ingredient = $recette->getIngredient();
+                $unite = $ingredient->getUnite();
+                
                 return [
                     'id' => $recette->getId(),
-                    'platId' => $recette->getPlat()->getId(),
-                    'ingredientId' => $recette->getIngredient()->getId(),
+                    'plat' => [
+                        'id' => $plat->getId(),
+                        'nom' => $plat->getNom(),
+                        'sprite' => $plat->getSprite(),
+                        'prix' => $plat->getPrix(),
+                        'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
+                    ],
+                    'ingredient' => [
+                        'id' => $ingredient->getId(),
+                        'nom' => $ingredient->getNom(),
+                        'sprite' => $ingredient->getSprite(),
+                        'unite' => [
+                            'id' => $unite->getId(),
+                            'nom' => $unite->getNom()
+                        ]
+                    ],
                     'quantite' => $recette->getQuantite()
                 ];
             }, $recettes));
         } catch (\Exception $e) {
             $response = $this->json([
-                'error' => 'An error occurred while fetching recipes'
+                'error' => 'An error occurred while fetching recipes',
+                'message' => $e->getMessage()
             ], 500);
         }
 
