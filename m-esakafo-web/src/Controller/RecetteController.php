@@ -14,6 +14,57 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/recettes')]
 class RecetteController extends AbstractController
 {
+    private function formatRecetteDetails($recette): array
+    {
+        $plat = $recette->getPlat();
+        $ingredient = $recette->getIngredient();
+        $unite = $ingredient->getUnite();
+        
+        return [
+            'id' => $recette->getId(),
+            'plat' => [
+                'id' => $plat->getId(),
+                'nom' => $plat->getNom(),
+                'sprite' => $plat->getSprite(),
+                'prix' => $plat->getPrix(),
+                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
+            ],
+            'ingredient' => [
+                'id' => $ingredient->getId(),
+                'nom' => $ingredient->getNom(),
+                'sprite' => $ingredient->getSprite(),
+                'unite' => [
+                    'id' => $unite->getId(),
+                    'nom' => $unite->getNom()
+                ]
+            ],
+            'quantite' => $recette->getQuantite()
+        ];
+    }
+
+    #[Route('', name: 'api_recettes_list', methods: ['GET'])]
+    public function list(RecetteRepository $recetteRepository): JsonResponse
+    {
+        try {
+            $recettes = $recetteRepository->findAll();
+            $response = $this->json(array_map(
+                [$this, 'formatRecetteDetails'],
+                $recettes
+            ));
+        } catch (\Exception $e) {
+            $response = $this->json([
+                'error' => 'An error occurred while fetching recipes',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+        
+        return $response;
+    }
+
     #[Route('', name: 'api_recettes_create', methods: ['POST'])]
     public function create(
         Request $request, 
@@ -23,7 +74,6 @@ class RecetteController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         
-        // Vérifier les données requises
         if (!isset($data['platId']) || !isset($data['ingredientId']) || !isset($data['quantite'])) {
             $response = $this->json([
                 'error' => 'Missing required fields'
@@ -45,16 +95,12 @@ class RecetteController extends AbstractController
                     
                     $recetteRepository->save($recette);
                     
-                    $response = $this->json([
-                        'id' => $recette->getId(),
-                        'platId' => $recette->getPlat()->getId(),
-                        'ingredientId' => $recette->getIngredient()->getId(),
-                        'quantite' => $recette->getQuantite()
-                    ]);
+                    $response = $this->json($this->formatRecetteDetails($recette));
                 }
             } catch (\Exception $e) {
                 $response = $this->json([
-                    'error' => 'An error occurred while creating the recipe'
+                    'error' => 'An error occurred while creating the recipe',
+                    'message' => $e->getMessage()
                 ], 500);
             }
         }
@@ -71,32 +117,10 @@ class RecetteController extends AbstractController
     {
         try {
             $recettes = $recetteRepository->findByPlatId($platId);
-            $response = $this->json(array_map(function($recette) {
-                $plat = $recette->getPlat();
-                $ingredient = $recette->getIngredient();
-                $unite = $ingredient->getUnite();
-                
-                return [
-                    'id' => $recette->getId(),
-                    'plat' => [
-                        'id' => $plat->getId(),
-                        'nom' => $plat->getNom(),
-                        'sprite' => $plat->getSprite(),
-                        'prix' => $plat->getPrix(),
-                        'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
-                    ],
-                    'ingredient' => [
-                        'id' => $ingredient->getId(),
-                        'nom' => $ingredient->getNom(),
-                        'sprite' => $ingredient->getSprite(),
-                        'unite' => [
-                            'id' => $unite->getId(),
-                            'nom' => $unite->getNom()
-                        ]
-                    ],
-                    'quantite' => $recette->getQuantite()
-                ];
-            }, $recettes));
+            $response = $this->json(array_map(
+                [$this, 'formatRecetteDetails'],
+                $recettes
+            ));
         } catch (\Exception $e) {
             $response = $this->json([
                 'error' => 'An error occurred while fetching recipes',
