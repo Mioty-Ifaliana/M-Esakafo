@@ -50,6 +50,11 @@ class CommandeController extends AbstractController
                 ]);
                 
             } catch (\Exception $e) {
+                // Log the exception message and details
+                $this->get('logger')->error('Error creating order: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'data' => $data,
+                ]);
                 $response = $this->json([
                     'error' => 'An error occurred while creating the order'
                 ], 500);
