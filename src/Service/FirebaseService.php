@@ -17,15 +17,12 @@ class FirebaseService
         $this->baseUrl = 'https://identitytoolkit.googleapis.com/v1';
     }
 
-    public function listUsers($idToken)
+    public function listUsers()
     {
         try {
             $response = $this->httpClient->request('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:lookup', [
                 'query' => [
                     'key' => $this->apiKey
-                ],
-                'json' => [
-                    'idToken' => $idToken
                 ]
             ]);
 

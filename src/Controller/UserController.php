@@ -62,7 +62,7 @@ class UserController extends AbstractController
             // Enlever "Bearer " si présent
             $token = str_replace('Bearer ', '', $token);
 
-            $users = $this->firebaseService->listUsers($token);
+            $users = $this->firebaseService->listUsers();
 
             return $this->json([
                 'status' => 'success',
