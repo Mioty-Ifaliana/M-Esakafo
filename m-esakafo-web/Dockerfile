@@ -29,10 +29,10 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_HOME=/composer
 
 # Définir le répertoire de travail
-WORKDIR /app
+WORKDIR /app/m-esakafo-web
 
 # Copier les fichiers de configuration de Composer
-COPY composer.json composer.lock ./
+COPY m-esakafo-web/composer.json m-esakafo-web/composer.lock ./
 
 # Configurer Composer pour autoriser les plugins
 RUN composer config --no-plugins allow-plugins.symfony/flex true \
@@ -42,7 +42,7 @@ RUN composer config --no-plugins allow-plugins.symfony/flex true \
 RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-scripts
 
 # Copier le reste des fichiers du projet
-COPY . .
+COPY m-esakafo-web/ .
 
 # Configuration de l'environnement
 ENV APP_ENV=prod
