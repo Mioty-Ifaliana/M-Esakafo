@@ -52,7 +52,7 @@ class CommandeController extends AbstractController
         ];
     }
 
-    #[Route('/pending', name: 'api_commandes_pending', methods: ['GET'])]
+    #[Route('/attente', name: 'api_commandes_pending', methods: ['GET'])]
     public function getPendingCommands(CommandeRepository $commandeRepository): JsonResponse
     {
         try {
