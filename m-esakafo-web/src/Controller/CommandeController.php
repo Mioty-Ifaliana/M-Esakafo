@@ -11,6 +11,16 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/commandes')]
 class CommandeController extends AbstractController
 {
+    #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
+    public function options(): JsonResponse
+    {
+        $response = new JsonResponse(['status' => 'ok']);
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+        return $response;
+    }
+
     #[Route('', name: 'api_commandes_create', methods: ['POST'])]
     public function create(Request $request, CommandeRepository $commandeRepository): JsonResponse
     {
@@ -18,32 +28,38 @@ class CommandeController extends AbstractController
         
         // Vérifier les données requises
         if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite'])) {
-            return $this->json([
+            $response = $this->json([
                 'error' => 'Missing required fields'
             ], 400);
+        } else {
+            try {
+                $commande = $commandeRepository->createNewCommande(
+                    $data['userId'],
+                    $data['platId'],
+                    $data['quantite']
+                );
+                
+                $response = $this->json([
+                    'id' => $commande->getId(),
+                    'userId' => $commande->getUserId(),
+                    'platId' => $commande->getPlatId(),
+                    'quantite' => $commande->getQuantite(),
+                    'numero_ticket' => $commande->getNumeroTicket(),
+                    'statut' => $commande->getStatut(),
+                    'date_commande' => $commande->getDateCommande()->format('Y-m-d H:i:s')
+                ]);
+                
+            } catch (\Exception $e) {
+                $response = $this->json([
+                    'error' => 'An error occurred while creating the order'
+                ], 500);
+            }
         }
+
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
         
-        try {
-            $commande = $commandeRepository->createNewCommande(
-                $data['userId'],
-                $data['platId'],
-                $data['quantite']
-            );
-            
-            return $this->json([
-                'id' => $commande->getId(),
-                'userId' => $commande->getUserId(),
-                'platId' => $commande->getPlatId(),
-                'quantite' => $commande->getQuantite(),
-                'numero_ticket' => $commande->getNumeroTicket(),
-                'statut' => $commande->getStatut(),
-                'date_commande' => $commande->getDateCommande()->format('Y-m-d H:i:s')
-            ]);
-            
-        } catch (\Exception $e) {
-            return $this->json([
-                'error' => 'An error occurred while creating the order'
-            ], 500);
-        }
+        return $response;
     }
 }
