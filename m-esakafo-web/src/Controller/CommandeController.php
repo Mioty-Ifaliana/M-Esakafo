@@ -19,14 +19,20 @@ class CommandeController extends AbstractController
         $this->logger = $logger;
     }
 
+    private function addCorsHeaders(JsonResponse $response): JsonResponse
+    {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        return $response;
+    }
+
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
     public function options(): JsonResponse
     {
         $response = new JsonResponse(['status' => 'ok']);
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        return $response;
+        return $this->addCorsHeaders($response);
     }
 
     #[Route('', name: 'api_commandes_create', methods: ['POST'])]
@@ -69,10 +75,6 @@ class CommandeController extends AbstractController
             }
         }
 
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        return $response;
+        return $this->addCorsHeaders($response);
     }
 }
