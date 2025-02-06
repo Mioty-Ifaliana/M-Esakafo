@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\FirebaseService;
 
 #[Route('/api/commandes')]
 class CommandeController extends AbstractController
@@ -22,19 +23,22 @@ class CommandeController extends AbstractController
     private $recetteRepository;
     private $mouvementRepository;
     private $entityManager;
+    private $firebaseService;
 
     public function __construct(
         LoggerInterface $logger,
         PlatRepository $platRepository,
         RecetteRepository $recetteRepository,
         MouvementRepository $mouvementRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        FirebaseService $firebaseService
     ) {
         $this->logger = $logger;
         $this->platRepository = $platRepository;
         $this->recetteRepository = $recetteRepository;
         $this->mouvementRepository = $mouvementRepository;
         $this->entityManager = $entityManager;
+        $this->firebaseService = $firebaseService;
     }
 
     private function createSortieIngredients(int $platId, int $quantiteCommande): void
@@ -114,6 +118,35 @@ class CommandeController extends AbstractController
         }
 
         return $this->addCorsHeaders($response);
+    }
+
+    #[Route('/check-user-orders/{uid}', name: 'api_check_user_orders', methods: ['GET'])]
+    public function checkUserOrders(string $uid, CommandeRepository $commandeRepository): JsonResponse
+    {
+        try {
+            // Récupérer les commandes terminées de l'utilisateur
+            $commandes = $commandeRepository->findBy([
+                'userId' => $uid,
+                'statut' => 1
+            ]);
+
+            $results = [];
+            foreach ($commandes as $commande) {
+                $plat = $this->platRepository->find($commande->getPlatId());
+                if ($plat) {
+                    $results[] = [
+                        'message' => sprintf('Le plat : %s est terminé', $plat->getNom())
+                    ];
+                }
+            }
+
+            return $this->json($results);
+
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
