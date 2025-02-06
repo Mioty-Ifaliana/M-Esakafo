@@ -35,6 +35,50 @@ class MouvementController extends AbstractController
         ];
     }
 
+    private function formatStockDetails($stock): array
+    {
+        $ingredient = $stock['ingredient'];
+        $unite = $ingredient->getUnite();
+        
+        return [
+            'ingredient' => [
+                'id' => $ingredient->getId(),
+                'nom' => $ingredient->getNom(),
+                'sprite' => $ingredient->getSprite(),
+                'unite' => [
+                    'id' => $unite->getId(),
+                    'nom' => $unite->getNom()
+                ]
+            ],
+            'stock_actuel' => $stock['stock_actuel'],
+            'total_entrees' => $stock['total_entrees'],
+            'total_sorties' => $stock['total_sorties']
+        ];
+    }
+
+    #[Route('/stocks', name: 'api_mouvements_stocks', methods: ['GET'])]
+    public function getAllStocks(MouvementRepository $mouvementRepository): JsonResponse
+    {
+        try {
+            $stocks = $mouvementRepository->getAllStocks();
+            $response = $this->json(array_map(
+                [$this, 'formatStockDetails'],
+                $stocks
+            ));
+        } catch (\Exception $e) {
+            $response = $this->json([
+                'error' => 'An error occurred while fetching stocks',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+        
+        return $response;
+    }
+
     #[Route('', name: 'api_mouvements_create', methods: ['POST'])]
     public function create(
         Request $request,

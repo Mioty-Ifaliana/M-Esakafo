@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Mouvement;
+use App\Entity\Ingredient;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -50,6 +51,37 @@ class MouvementRepository extends ServiceEntityRepository
         $totalSorties = $result['total_sorties'] ?? 0;
 
         return $totalEntrees - $totalSorties;
+    }
+
+    public function getAllStocks(): array
+    {
+        $em = $this->getEntityManager();
+        
+        // Récupérer tous les ingrédients
+        $ingredients = $em->getRepository(Ingredient::class)->findAll();
+        
+        $stocks = [];
+        foreach ($ingredients as $ingredient) {
+            $result = $this->createQueryBuilder('m')
+                ->select('SUM(m.entree) as total_entrees, SUM(m.sortie) as total_sorties')
+                ->andWhere('m.ingredient = :ingredient')
+                ->setParameter('ingredient', $ingredient)
+                ->getQuery()
+                ->getOneOrNullResult();
+
+            $totalEntrees = $result['total_entrees'] ?? 0;
+            $totalSorties = $result['total_sorties'] ?? 0;
+            $stockActuel = $totalEntrees - $totalSorties;
+
+            $stocks[] = [
+                'ingredient' => $ingredient,
+                'stock_actuel' => $stockActuel,
+                'total_entrees' => $totalEntrees,
+                'total_sorties' => $totalSorties
+            ];
+        }
+        
+        return $stocks;
     }
 
     public function findByDateRange(\DateTime $debut, \DateTime $fin): array
