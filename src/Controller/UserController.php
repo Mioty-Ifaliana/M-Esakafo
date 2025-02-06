@@ -75,4 +75,36 @@ class UserController extends AbstractController
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    #[Route('/list-clients', methods: ['GET'])]
+    public function listClients(Request $request): JsonResponse
+    {
+        try {
+            $token = $request->headers->get('Authorization');
+            
+            if (!$token) {
+                return $this->json([
+                    'status' => 'error',
+                    'message' => 'Token manquant'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            $users = $this->firebaseService->listUsers($token);
+            
+            // Filtrer pour exclure admin@gmail.com
+            $filteredUsers = array_filter($users, function($user) {
+                return $user['email'] !== 'admin@gmail.com';
+            });
+
+            return $this->json([
+                'status' => 'success',
+                'data' => array_values($filteredUsers)
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+    }
 }
