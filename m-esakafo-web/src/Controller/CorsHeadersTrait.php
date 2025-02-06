@@ -7,26 +7,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 trait CorsHeadersTrait
 {
-    protected function addCorsHeaders(JsonResponse $response): JsonResponse
+    protected function corsResponse(JsonResponse $response): JsonResponse
     {
-        // Permettre toutes les origines
         $response->headers->set('Access-Control-Allow-Origin', '*');
-        
-        // Permettre toutes les méthodes
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE, PATCH');
-        
-        // Permettre tous les en-têtes
-        $response->headers->set('Access-Control-Allow-Headers', '*');
-        
-        // Cache pour les requêtes préliminaires
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Auth');
+        $response->headers->set('Access-Control-Expose-Headers', 'Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Total-Count');
         $response->headers->set('Access-Control-Max-Age', '3600');
-        
-        // Exposer tous les en-têtes à l'application cliente
-        $response->headers->set('Access-Control-Expose-Headers', '*');
-        
-        // En-têtes supplémentaires pour la compatibilité
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        
+        $response->headers->set('Vary', 'Origin');
         return $response;
     }
 
@@ -35,11 +23,10 @@ trait CorsHeadersTrait
         $response = new Response();
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE, PATCH');
-        $response->headers->set('Access-Control-Allow-Headers', '*');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Auth');
+        $response->headers->set('Access-Control-Expose-Headers', 'Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Total-Count');
         $response->headers->set('Access-Control-Max-Age', '3600');
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        $response->headers->set('Access-Control-Expose-Headers', '*');
-        
+        $response->headers->set('Vary', 'Origin');
         return $response;
     }
 }

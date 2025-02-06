@@ -2,21 +2,26 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    
+    # Gérer les requêtes OPTIONS
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+    
+    # Redirection vers index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
 <IfModule mod_headers.c>
+    # En-têtes CORS
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE, PATCH"
-    Header always set Access-Control-Allow-Headers "*"
-    Header always set Access-Control-Expose-Headers "*"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Auth"
+    Header always set Access-Control-Expose-Headers "Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Total-Count"
     Header always set Access-Control-Max-Age "3600"
     
-    # Gérer les requêtes OPTIONS préliminaires
-    RewriteEngine On
-    RewriteCond %{REQUEST_METHOD} OPTIONS
-    RewriteRule ^(.*)$ $1 [R=200,L]
+    # Ajouter Vary: Origin
+    Header always set Vary "Origin"
     
     # Forcer le type de contenu pour les réponses JSON
     Header always set Content-Type "application/json" env=CONTENT_TYPE_JSON
@@ -24,3 +29,13 @@ DirectoryIndex index.php
 
 # Définir la variable d'environnement pour les réponses JSON
 SetEnvIf Request_URI "^/api/" CONTENT_TYPE_JSON
+
+# Désactiver le cache pour les requêtes API
+<IfModule mod_expires.c>
+    <IfModule mod_headers.c>
+        <FilesMatch "\.(json)$">
+            Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+            Header set Pragma "no-cache"
+        </FilesMatch>
+    </IfModule>
+</IfModule>
