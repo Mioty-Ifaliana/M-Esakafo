@@ -7,10 +7,18 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
 
 #[Route('/api/commandes')]
 class CommandeController extends AbstractController
 {
+    private $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
     public function options(): JsonResponse
     {
@@ -51,7 +59,7 @@ class CommandeController extends AbstractController
                 
             } catch (\Exception $e) {
                 // Log the exception message and details
-                $this->get('logger')->error('Error creating order: ' . $e->getMessage(), [
+                $this->logger->error('Error creating order: ' . $e->getMessage(), [
                     'exception' => $e,
                     'data' => $data,
                 ]);
