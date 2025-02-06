@@ -14,6 +14,23 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/plats', name: 'api_plats_')]
 class PlatController extends AbstractController
 {
+    private function configureCorsHeaders(Response $response): Response
+    {
+        $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:5173');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        $response->headers->set('Access-Control-Max-Age', '3600');
+        
+        return $response;
+    }
+
+    #[Route('', name: 'options', methods: ['OPTIONS'])]
+    public function options(): Response
+    {
+        $response = new Response();
+        return $this->configureCorsHeaders($response);
+    }
+
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
@@ -33,20 +50,8 @@ class PlatController extends AbstractController
             ];
         }, $plats)));
 
-        // Create a new JsonResponse with the array
         $response = new JsonResponse($platsArray);
-        
-        // Add CORS headers
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        // Disable debug output
-        if (function_exists('dump')) {
-            ob_clean();
-        }
-        
-        return $response;
+        return $this->configureCorsHeaders($response);
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
@@ -66,12 +71,7 @@ class PlatController extends AbstractController
             'prix' => $plat->getPrix()
         ]);
         
-        // Ajouter les headers CORS
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        return $response;
+        return $this->configureCorsHeaders($response);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
@@ -100,12 +100,7 @@ class PlatController extends AbstractController
             'prix' => $plat->getPrix()
         ], 201);
         
-        // Ajouter les headers CORS
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        return $response;
+        return $this->configureCorsHeaders($response);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
@@ -130,12 +125,7 @@ class PlatController extends AbstractController
 
         $response = $this->json($plat);
         
-        // Ajouter les headers CORS
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        return $response;
+        return $this->configureCorsHeaders($response);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
@@ -146,11 +136,6 @@ class PlatController extends AbstractController
 
         $response = $this->json(null, Response::HTTP_NO_CONTENT);
         
-        // Ajouter les headers CORS
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        return $response;
+        return $this->configureCorsHeaders($response);
     }
 }
