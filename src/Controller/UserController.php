@@ -81,7 +81,10 @@ class UserController extends AbstractController
     {
         $users = $this->firebaseService->listAllUsers();
 
-        return new JsonResponse($users);
+        return $this->json([
+            'status' => 'success',
+            'data' => array_values($users)
+        ]);
     }
 
     #[Route('/list-clients', methods: ['GET'])]
