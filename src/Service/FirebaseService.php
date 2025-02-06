@@ -9,6 +9,7 @@ class FirebaseService
     private $httpClient;
     private $apiKey;
     private $baseUrl;
+    
 
     public function __construct(HttpClientInterface $httpClient)
     {
@@ -17,8 +18,26 @@ class FirebaseService
         $this->baseUrl = 'https://identitytoolkit.googleapis.com/v1';
     }
 
-    public function listUsers()
+    public function listUsers($idToken)
     {
+        try {
+            $response = $this->httpClient->request('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:lookup', [
+                'query' => [
+                    'key' => $this->apiKey
+                ],
+                'json' => [
+                    'idToken' => $idToken
+                ]
+            ]);
+
+            $data = $response->toArray();
+            return $data['users'] ?? [];
+        } catch (\Exception $e) {
+            throw new \Exception('Erreur lors de la récupération des utilisateurs: ' . $e->getMessage());
+        }
+    }
+
+    public function listAllUsers() {
         try {
             $response = $this->httpClient->request('POST', 'https://identitytoolkit.googleapis.com/v1/accounts:lookup', [
                 'query' => [
@@ -31,6 +50,17 @@ class FirebaseService
         } catch (\Exception $e) {
             throw new \Exception('Erreur lors de la récupération des utilisateurs: ' . $e->getMessage());
         }
+    }
+
+    public function listUsersFirebase() {
+        $response = $this->httpClient->request('GET', 'https://identitytoolkit.googleapis.com/v1/accounts', [
+            'query' => [
+                'key' => $this->apiKey
+            ]
+        ]);
+
+        $data = $response->toArray();
+        return $data['users'] ?? [];
     }
 
     public function signIn(string $email, string $password)
@@ -51,5 +81,5 @@ class FirebaseService
         } catch (\Exception $e) {
             throw new \Exception('Erreur lors de la connexion: ' . $e->getMessage());
         }
-    }
+    }    
 }

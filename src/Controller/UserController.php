@@ -62,7 +62,7 @@ class UserController extends AbstractController
             // Enlever "Bearer " si présent
             $token = str_replace('Bearer ', '', $token);
 
-            $users = $this->firebaseService->listUsers();
+            $users = $this->firebaseService->listUsers($token);
 
             return $this->json([
                 'status' => 'success',
@@ -74,6 +74,14 @@ class UserController extends AbstractController
                 'message' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    #[Route('/list-users', methods: ['GET'])]
+    public function listAllUsers(): JsonResponse
+    {
+        $users = $this->firebaseService->listAllUsers();
+
+        return new JsonResponse($users);
     }
 
     #[Route('/list-clients', methods: ['GET'])]
