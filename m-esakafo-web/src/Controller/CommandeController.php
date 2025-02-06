@@ -10,14 +10,18 @@ use App\Repository\MouvementRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\FirebaseService;
+use App\Controller\CorsHeadersTrait;
 
 #[Route('/api/commandes')]
 class CommandeController extends AbstractController
 {
+    use CorsHeadersTrait;
+
     private $logger;
     private $platRepository;
     private $recetteRepository;
@@ -150,10 +154,15 @@ class CommandeController extends AbstractController
     }
 
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
-    public function options(): JsonResponse
+    public function options(): Response
     {
-        $response = new JsonResponse(['status' => 'ok']);
-        return $this->addCorsHeaders($response);
+        return $this->handleOptionsRequest();
+    }
+
+    #[Route('/{id}', name: 'api_commande_options', methods: ['OPTIONS'])]
+    public function optionsId(): Response
+    {
+        return $this->handleOptionsRequest();
     }
 
     #[Route('', name: 'api_commandes_create', methods: ['POST'])]
@@ -233,6 +242,16 @@ class CommandeController extends AbstractController
 
     private function addCorsHeaders(JsonResponse $response): JsonResponse
     {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        $response->headers->set('Access-Control-Max-Age', '3600');
+        return $response;
+    }
+
+    private function handleOptionsRequest(): Response
+    {
+        $response = new Response();
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
