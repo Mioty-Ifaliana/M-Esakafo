@@ -66,4 +66,23 @@ class CommandeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function getTotalGlobal(): array
+    {
+        $result = $this->createQueryBuilder('c')
+            ->select('SUM(c.quantite * p.prix) as totalVentes')
+            ->addSelect('SUM(c.quantite) as totalQuantite')
+            ->addSelect('COUNT(DISTINCT p.id) as nombrePlats')
+            ->innerJoin('c.plat', 'p')
+            ->where('c.statut = :statut')
+            ->setParameter('statut', 4)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return [
+            'total_ventes' => (float)($result['totalVentes'] ?? 0),
+            'total_quantite' => (int)($result['totalQuantite'] ?? 0),
+            'nombre_plats' => (int)($result['nombrePlats'] ?? 0)
+        ];
+    }
 }

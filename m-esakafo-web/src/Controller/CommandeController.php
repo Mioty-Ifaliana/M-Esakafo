@@ -157,26 +157,25 @@ class CommandeController extends AbstractController
     public function getVentesTotales(CommandeRepository $commandeRepository): JsonResponse
     {
         try {
+            // Récupérer les ventes par plat
             $ventesParPlat = $commandeRepository->getTotalVentesParPlat();
             
-            // Calculer le total général
-            $totalGeneral = array_reduce($ventesParPlat, function($carry, $item) {
-                return $carry + $item['totalVentes'];
-            }, 0);
+            // Récupérer les totaux globaux
+            $totauxGlobaux = $commandeRepository->getTotalGlobal();
             
             // Formater les données pour inclure des statistiques supplémentaires
-            $ventesFormatees = array_map(function($vente) use ($totalGeneral) {
+            $ventesFormatees = array_map(function($vente) use ($totauxGlobaux) {
                 return [
                     'plat' => [
                         'id' => $vente['platId'],
                         'nom' => $vente['platNom'],
-                        'prix_unitaire' => $vente['platPrix']
+                        'prix_unitaire' => (float)$vente['platPrix']
                     ],
                     'statistiques' => [
                         'quantite_vendue' => (int)$vente['totalQuantite'],
                         'montant_total' => (float)$vente['totalVentes'],
-                        'pourcentage_total' => $totalGeneral > 0 
-                            ? round(($vente['totalVentes'] / $totalGeneral) * 100, 2)
+                        'pourcentage_total' => $totauxGlobaux['total_ventes'] > 0 
+                            ? round(($vente['totalVentes'] / $totauxGlobaux['total_ventes']) * 100, 2)
                             : 0
                     ]
                 ];
@@ -186,8 +185,14 @@ class CommandeController extends AbstractController
                 'success' => true,
                 'data' => [
                     'ventes_par_plat' => $ventesFormatees,
-                    'total_general' => $totalGeneral,
-                    'nombre_plats_vendus' => count($ventesParPlat)
+                    'resume_global' => [
+                        'chiffre_affaires_total' => $totauxGlobaux['total_ventes'],
+                        'nombre_total_plats_vendus' => $totauxGlobaux['total_quantite'],
+                        'nombre_plats_differents' => $totauxGlobaux['nombre_plats'],
+                        'moyenne_vente_par_plat' => $totauxGlobaux['nombre_plats'] > 0 
+                            ? round($totauxGlobaux['total_ventes'] / $totauxGlobaux['nombre_plats'], 2)
+                            : 0
+                    ]
                 ]
             ]);
             
