@@ -159,43 +159,73 @@ class CommandeController extends AbstractController
     #[Route('', name: 'api_commandes_create', methods: ['POST'])]
     public function create(Request $request, CommandeRepository $commandeRepository): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        
-        if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
-            $response = $this->json([
-                'error' => 'Missing required fields',
-                'required' => ['userId', 'platId', 'quantite', 'numeroTicket']
-            ], 400);
-        } else {
-            try {
-                // Vérifier que le numéro de ticket est au bon format (5 caractères)
-                if (strlen($data['numeroTicket']) !== 5) {
-                    throw new \InvalidArgumentException('Le numéro de ticket doit contenir exactement 5 caractères');
-                }
+        try {
+            $data = json_decode($request->getContent(), true);
+            
+            // Log des données reçues
+            $this->logger->info('Données reçues:', ['data' => $data]);
+            
+            if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Missing required fields',
+                    'required' => ['userId', 'platId', 'quantite', 'numeroTicket'],
+                    'received' => $data
+                ], 400);
+            }
 
+            // Vérifier que le plat existe
+            $plat = $this->platRepository->find($data['platId']);
+            if (!$plat) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Plat non trouvé',
+                    'platId' => $data['platId']
+                ], 404);
+            }
+
+            // Vérifier que le numéro de ticket est au bon format (5 caractères)
+            if (strlen($data['numeroTicket']) !== 5) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Le numéro de ticket doit contenir exactement 5 caractères'
+                ], 400);
+            }
+
+            try {
                 // Créer les mouvements de sortie des ingrédients
                 $this->createSortieIngredients($data['platId'], $data['quantite']);
-
-                // Créer la commande
-                $commande = $commandeRepository->createNewCommande(
-                    $data['userId'],
-                    $data['platId'],
-                    $data['quantite'],
-                    $data['numeroTicket']
-                );
-                
-                $response = $this->json($this->formatCommandeDetails($commande), 201);
-                
             } catch (\Exception $e) {
-                $this->logger->error('Error creating order: ' . $e->getMessage(), [
-                    'exception' => $e,
-                    'data' => $data,
-                ]);
-                $response = $this->json([
-                    'error' => 'An error occurred while creating the order',
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Erreur lors de la création des mouvements',
                     'message' => $e->getMessage()
-                ], 500);
+                ], 400);
             }
+
+            // Créer la commande
+            $commande = $commandeRepository->createNewCommande(
+                $data['userId'],
+                $data['platId'],
+                $data['quantite'],
+                $data['numeroTicket']
+            );
+            
+            $response = $this->json([
+                'success' => true,
+                'data' => $this->formatCommandeDetails($commande)
+            ], 201);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Error creating order: ' . $e->getMessage(), [
+                'exception' => $e,
+                'data' => $data ?? null,
+            ]);
+            $response = $this->json([
+                'success' => false,
+                'error' => 'An error occurred while creating the order',
+                'message' => $e->getMessage()
+            ], 500);
         }
 
         return $this->addCorsHeaders($response);
@@ -204,8 +234,9 @@ class CommandeController extends AbstractController
     private function addCorsHeaders(JsonResponse $response): JsonResponse
     {
         $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        $response->headers->set('Access-Control-Max-Age', '3600');
         return $response;
     }
 }
