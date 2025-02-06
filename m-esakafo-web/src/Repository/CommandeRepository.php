@@ -21,12 +21,9 @@ class CommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, Commande::class);
     }
 
-    public function createNewCommande(string $userId, int $platId, int $quantite): Commande
+    public function createNewCommande(string $userId, int $platId, int $quantite, string $numeroTicket): Commande
     {
         $commande = new Commande();
-        
-        // Générer un numéro de ticket à 5 chiffres
-        $numeroTicket = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
         
         // Configurer la commande
         $commande->setUserId($userId)

@@ -22,15 +22,6 @@ class CommandeController extends AbstractController
         $this->platRepository = $platRepository;
     }
 
-    private function addCorsHeaders(JsonResponse $response): JsonResponse
-    {
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        return $response;
-    }
-
     private function formatCommandeDetails($commande): array
     {
         $plat = $this->platRepository->find($commande->getPlatId());
@@ -52,7 +43,7 @@ class CommandeController extends AbstractController
         ];
     }
 
-    #[Route('/attente', name: 'api_commandes_pending', methods: ['GET'])]
+    #[Route('/attente', name: 'api_commandes_attente', methods: ['GET'])]
     public function getPendingCommands(CommandeRepository $commandeRepository): JsonResponse
     {
         try {
@@ -87,19 +78,26 @@ class CommandeController extends AbstractController
         $data = json_decode($request->getContent(), true);
         
         // Vérifier les données requises
-        if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite'])) {
+        if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
             $response = $this->json([
-                'error' => 'Missing required fields'
+                'error' => 'Missing required fields',
+                'required' => ['userId', 'platId', 'quantite', 'numeroTicket']
             ], 400);
         } else {
             try {
+                // Vérifier que le numéro de ticket est au bon format (5 caractères)
+                if (strlen($data['numeroTicket']) !== 5) {
+                    throw new \InvalidArgumentException('Le numéro de ticket doit contenir exactement 5 caractères');
+                }
+
                 $commande = $commandeRepository->createNewCommande(
                     $data['userId'],
                     $data['platId'],
-                    $data['quantite']
+                    $data['quantite'],
+                    $data['numeroTicket']
                 );
                 
-                $response = $this->json($this->formatCommandeDetails($commande));
+                $response = $this->json($this->formatCommandeDetails($commande), 201);
                 
             } catch (\Exception $e) {
                 $this->logger->error('Error creating order: ' . $e->getMessage(), [
@@ -114,5 +112,14 @@ class CommandeController extends AbstractController
         }
 
         return $this->addCorsHeaders($response);
+    }
+
+    private function addCorsHeaders(JsonResponse $response): JsonResponse
+    {
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        return $response;
     }
 }
