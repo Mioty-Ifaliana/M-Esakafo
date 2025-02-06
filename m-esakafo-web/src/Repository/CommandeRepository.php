@@ -52,14 +52,18 @@ class CommandeRepository extends ServiceEntityRepository
 
     public function getTotalVentesParPlat(): array
     {
-        $qb = $this->createQueryBuilder('c')
-            ->select('p.id as platId, p.nom as platNom, p.prix as platPrix, SUM(c.quantite) as totalQuantite, SUM(c.quantite * p.prix) as totalVentes')
-            ->leftJoin('c.plat', 'p')
+        return $this->createQueryBuilder('c')
+            ->select('p.id as platId, p.nom as platNom, p.prix as platPrix')
+            ->addSelect('SUM(c.quantite) as totalQuantite')
+            ->addSelect('SUM(c.quantite * p.prix) as totalVentes')
+            ->innerJoin('c.plat', 'p')
             ->where('c.statut = :statut')
             ->setParameter('statut', 4)
-            ->groupBy('p.id, p.nom, p.prix')
-            ->orderBy('totalVentes', 'DESC');
-
-        return $qb->getQuery()->getResult();
+            ->groupBy('p.id')
+            ->addGroupBy('p.nom')
+            ->addGroupBy('p.prix')
+            ->orderBy('totalVentes', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 }

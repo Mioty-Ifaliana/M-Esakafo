@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommandeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Plat;
 
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 #[ORM\Table(name: 'commandes')]
@@ -18,7 +19,11 @@ class Commande
     #[ORM\Column(length: 255)]
     private ?string $userId = null;
 
-    #[ORM\Column]
+    #[ORM\ManyToOne(targetEntity: Plat::class)]
+    #[ORM\JoinColumn(name: 'plat_id', referencedColumnName: 'id')]
+    private ?Plat $plat = null;
+
+    #[ORM\Column(name: 'plat_id')]
     private ?int $platId = null;
 
     #[ORM\Column]
@@ -46,6 +51,18 @@ class Commande
     public function setUserId(string $userId): static
     {
         $this->userId = $userId;
+        return $this;
+    }
+
+    public function getPlat(): ?Plat
+    {
+        return $this->plat;
+    }
+
+    public function setPlat(?Plat $plat): static
+    {
+        $this->plat = $plat;
+        $this->platId = $plat?->getId();
         return $this;
     }
 
