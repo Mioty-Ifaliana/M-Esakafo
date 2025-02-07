@@ -23,6 +23,10 @@ class Ingredient
     #[Groups(['ingredient:read'])]
     private ?string $sprite = null;
 
+    #[ORM\Column(type: 'float', nullable: true)]
+    #[Groups(['ingredient:read'])]
+    private ?float $quantite = null;
+
     #[ORM\ManyToOne(targetEntity: Unite::class)]
     #[ORM\JoinColumn(name: "id_unite", referencedColumnName: "id", nullable: false)]
     #[Groups(['ingredient:read'])]
@@ -54,6 +58,17 @@ class Ingredient
     {
         $this->sprite = $sprite;
 
+        return $this;
+    }
+
+    public function getQuantite(): ?float
+    {
+        return $this->quantite;
+    }
+
+    public function setQuantite(?float $quantite): static
+    {
+        $this->quantite = $quantite;
         return $this;
     }
 
