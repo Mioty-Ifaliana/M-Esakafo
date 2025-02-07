@@ -95,4 +95,16 @@ class CommandeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findCommandesByStatus(int $status): array
+    {
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.plat', 'p')
+            ->addSelect('p')
+            ->where('c.statut = :status')
+            ->setParameter('status', $status)
+            ->orderBy('c.date_commande', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

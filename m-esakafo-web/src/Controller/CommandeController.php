@@ -253,6 +253,40 @@ class CommandeController extends AbstractController
         }
     }
 
+    #[Route('/status/{status}', name: 'list_by_status', methods: ['GET'])]
+    public function listByStatus(int $status): JsonResponse
+    {
+        try {
+            $commandes = $this->commandeRepository->findCommandesByStatus($status);
+            
+            // Préparer le message en fonction du statut
+            $statusMessages = [
+                0 => 'en attente',
+                1 => 'en cours de préparation',
+                2 => 'prêt',
+                3 => 'livré'
+            ];
+            
+            $statusMessage = $statusMessages[$status] ?? 'statut inconnu';
+            
+            return $this->json([
+                'status' => 'success',
+                'message' => 'Commandes ' . $statusMessage,
+                'data' => [
+                    'status' => $status,
+                    'status_label' => $statusMessage,
+                    'commandes' => $commandes
+                ]
+            ], Response::HTTP_OK, [], ['groups' => ['commande:read']]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     #[Route('/options', name: 'api_commandes_options', methods: ['OPTIONS'])]
     public function options(): Response
     {
