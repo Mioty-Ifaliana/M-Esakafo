@@ -271,54 +271,28 @@ class CommandeController extends AbstractController
     #[Route('/create', name: 'api_commandes_create', methods: ['POST', 'OPTIONS'])]
     public function create(Request $request, CommandeRepository $commandeRepository): JsonResponse
     {
-        // Gérer la requête OPTIONS
-        if ($request->getMethod() === 'OPTIONS') {
-            return $this->corsResponse(new JsonResponse(null, 204));
-        }
-
         try {
             $data = json_decode($request->getContent(), true);
             
-            // Log des données reçues
-            $this->logger->info('Données reçues:', ['data' => $data]);
-            
-            // Validation des champs requis
-            if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
-                return $this->corsResponse($this->json([
-                    'success' => false,
-                    'error' => 'Missing required fields',
-                    'required' => ['userId', 'platId', 'quantite', 'numeroTicket'],
-                    'received' => $data
-                ], 400));
+            // Log incoming data for debugging
+            $this->logger->info('Create Commande Request', [
+                'data' => $data,
+                'request_content' => $request->getContent()
+            ]);
+
+            // Validate required fields
+            $requiredFields = ['userId', 'platId', 'quantite', 'numeroTicket'];
+            foreach ($requiredFields as $field) {
+                if (!isset($data[$field])) {
+                    throw new \Exception("Missing required field: $field");
+                }
             }
 
-            // Validation de la quantité
-            if (!is_numeric($data['quantite']) || $data['quantite'] <= 0) {
-                return $this->corsResponse($this->json([
-                    'success' => false,
-                    'error' => 'La quantité doit être un nombre positif'
-                ], 400));
-            }
-
-            // Vérifier que le plat existe
             $plat = $this->platRepository->find($data['platId']);
             if (!$plat) {
-                return $this->corsResponse($this->json([
-                    'success' => false,
-                    'error' => 'Plat non trouvé',
-                    'platId' => $data['platId']
-                ], 404));
+                throw new \Exception("Plat not found with ID: " . $data['platId']);
             }
 
-            // Vérifier que le numéro de ticket est au bon format (5 caractères)
-            if (strlen($data['numeroTicket']) !== 5) {
-                return $this->corsResponse($this->json([
-                    'success' => false,
-                    'error' => 'Le numéro de ticket doit contenir exactement 5 caractères'
-                ], 400));
-            }
-
-            // Créer la commande
             $commande = new Commande();
             $commande->setUserId($data['userId'])
                     ->setPlatId($data['platId'])
@@ -341,12 +315,13 @@ class CommandeController extends AbstractController
                 // Log du succès
                 $this->logger->info('Commande créée avec succès:', [
                     'commandeId' => $commande->getId(),
-                    'userId' => $data['userId'],
-                    'platId' => $data['platId']
+                    'platId' => $data['platId'],
+                    'quantite' => $data['quantite']
                 ]);
-                
-                return $this->corsResponse($this->json([
-                    'success' => true,
+
+                return $this->corsResponse(new JsonResponse([
+                    'status' => 'success',
+                    'message' => 'Commande créée avec succès',
                     'data' => $this->formatCommandeDetails($commande)
                 ], 201));
                 
@@ -357,26 +332,29 @@ class CommandeController extends AbstractController
                 $this->logger->error('Erreur lors de la création des mouvements:', [
                     'platId' => $data['platId'],
                     'quantite' => $data['quantite'],
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
-                
-                return $this->corsResponse($this->json([
-                    'success' => false,
-                    'error' => 'Erreur lors de la création des mouvements',
-                    'message' => $e->getMessage()
-                ], 400));
+
+                return $this->corsResponse(new JsonResponse([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                    'details' => $this->isDev() ? [
+                        'trace' => $e->getTraceAsString(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ] : null
+                ], 500));
             }
             
         } catch (\Exception $e) {
-            $this->logger->error('Error creating order: ' . $e->getMessage(), [
-                'exception' => $e,
-                'data' => $data ?? null,
+            $this->logger->error('Erreur lors de la création de la commande:', [
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            return $this->corsResponse($this->json([
-                'success' => false,
-                'error' => 'An error occurred while creating the order',
+
+            return $this->corsResponse(new JsonResponse([
+                'status' => 'error',
                 'message' => $e->getMessage(),
                 'details' => $this->isDev() ? [
                     'trace' => $e->getTraceAsString(),
@@ -395,6 +373,16 @@ class CommandeController extends AbstractController
         foreach ($recettes as $recette) {
             $ingredient = $recette->getIngredient();
             $quantiteRequise = $recette->getQuantite();
+
+            // Vérifier le stock disponible
+            if ($ingredient->getQuantite() < ($quantite * $quantiteRequise)) {
+                $this->logger->error('Stock insuffisant', [
+                    'ingredient' => $ingredient->getNom(),
+                    'stock_actuel' => $ingredient->getQuantite(),
+                    'quantite_requise' => $quantite * $quantiteRequise
+                ]);
+                throw new \Exception("Stock insuffisant pour l'ingrédient: " . $ingredient->getNom());
+            }
 
             // Créer un mouvement de sortie
             $mouvement = new Mouvement();
