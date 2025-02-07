@@ -375,7 +375,7 @@ class CommandeController extends AbstractController
             $quantiteRequise = $recette->getQuantite();
 
             // Vérifier le stock disponible
-            if ($ingredient->getQuantite() < ($quantite * $quantiteRequise)) {
+            if ($recette->getQuantite() < ($quantite * $quantiteRequise)) {
                 $this->logger->error('Stock insuffisant', [
                     'ingredient' => $ingredient->getNom(),
                     'stock_actuel' => $ingredient->getQuantite(),
