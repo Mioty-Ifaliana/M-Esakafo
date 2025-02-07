@@ -8,70 +8,72 @@ class FirebaseService
 {
     private $httpClient;
     private $apiKey;
-    private $projectId;
 
     public function __construct(HttpClientInterface $httpClient)
     {
         $this->httpClient = $httpClient;
         $this->apiKey = 'AIzaSyApxACHC_7yMd7QfVbmTUUDzmsSCrHdxXI';
-        $this->projectId = 'e-sakafo-9db36';
     }
 
     public function listAllUsers()
     {
         try {
-            // Utiliser l'API REST de Firebase pour obtenir un token d'accès
-            $response = $this->httpClient->request(
+            // D'abord, se connecter en tant qu'admin
+            $signInResponse = $this->httpClient->request(
                 'POST',
-                'https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken',
+                'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword',
                 [
                     'query' => [
                         'key' => $this->apiKey
                     ],
                     'json' => [
+                        'email' => 'admin@gmail.com',
+                        'password' => 'admin123',
                         'returnSecureToken' => true
                     ]
                 ]
             );
 
-            $data = $response->toArray();
-            $idToken = $data['idToken'] ?? null;
+            $signInData = $signInResponse->toArray();
+            $idToken = $signInData['idToken'] ?? null;
 
             if (!$idToken) {
-                throw new \Exception('Impossible d\'obtenir le token d\'accès');
+                throw new \Exception('Échec de l\'authentification admin');
             }
 
             // Utiliser le token pour obtenir la liste des utilisateurs
-            $usersResponse = $this->httpClient->request(
-                'GET',
-                sprintf('https://identitytoolkit.googleapis.com/v1/projects/%s/accounts', $this->projectId),
+            $response = $this->httpClient->request(
+                'POST',
+                'https://identitytoolkit.googleapis.com/v1/accounts:lookup',
                 [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $idToken
+                    'query' => [
+                        'key' => $this->apiKey
+                    ],
+                    'json' => [
+                        'idToken' => $idToken
                     ]
                 ]
             );
 
-            $usersData = $usersResponse->toArray();
-            $users = $usersData['users'] ?? [];
+            $data = $response->toArray();
+            $users = $data['users'] ?? [];
 
-            // Formater les données des utilisateurs
+            // Formater la réponse
             return array_map(function($user) {
                 return [
                     'uid' => $user['localId'] ?? null,
                     'email' => $user['email'] ?? null,
                     'displayName' => $user['displayName'] ?? null,
-                    'phoneNumber' => $user['phoneNumber'] ?? null,
-                    'photoUrl' => $user['photoUrl'] ?? null,
                     'emailVerified' => $user['emailVerified'] ?? false,
-                    'disabled' => $user['disabled'] ?? false,
-                    'creationTime' => $user['createdAt'] ?? null,
-                    'lastSignInTime' => $user['lastLoginAt'] ?? null
+                    'lastLoginAt' => $user['lastLoginAt'] ?? null,
+                    'createdAt' => $user['createdAt'] ?? null
                 ];
             }, $users);
 
         } catch (\Exception $e) {
-            throw new \Exception('Erreur lors de la récupération des utilisateurs: ' . $e->getMessage());
+            // Log l'erreur pour le débogage
+            error_log('Firebase Error: ' . $e->getMessage());
+            throw new \Exception('Erreur lors de la récupération des utilisateurs');
         }
     }
 
