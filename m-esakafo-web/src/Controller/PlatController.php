@@ -19,24 +19,10 @@ class PlatController extends AbstractController
     {
         try {
             $plats = $platRepository->getAllPlats();
-            
-            $platsArray = array_values(array_filter(array_map(function($plat) {
-                if (!$plat || !$plat->getId() || !$plat->getNom()) {
-                    return null;
-                }
-                
-                return [
-                    'id' => $plat->getId(),
-                    'nom' => $plat->getNom(),
-                    'sprite' => $plat->getSprite(),
-                    'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : '00:05:00',
-                    'prix' => $plat->getPrix()
-                ];
-            }, $plats)));
 
             return $this->json([
                 'status' => 'success',
-                'data' => $platsArray
+                'data' => $plats
             ], Response::HTTP_OK);
             
         } catch (\Exception $e) {
