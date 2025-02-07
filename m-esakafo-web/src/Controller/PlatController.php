@@ -17,10 +17,6 @@ class PlatController extends AbstractController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
-        if (isset($this->container) && $this->container->has('profiler')) {
-            $this->container->get('profiler')->disable();
-        }
-        
         try {
             $plats = $platRepository->getAllPlats();
             
@@ -33,28 +29,21 @@ class PlatController extends AbstractController
                     'id' => $plat->getId(),
                     'nom' => $plat->getNom(),
                     'sprite' => $plat->getSprite(),
-                    'tempsCuisson' => $plat->getTempsCuisson(),
+                    'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : '00:05:00',
                     'prix' => $plat->getPrix()
                 ];
             }, $plats)));
 
-            return new JsonResponse([
-                'success' => true,
-                'message' => count($platsArray) . ' plats trouvés',
+            return $this->json([
+                'status' => 'success',
                 'data' => $platsArray
-            ], JsonResponse::HTTP_OK, [
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers' => 'Content-Type',
-                'Content-Type' => 'application/json; charset=utf-8'
-            ]);
+            ], Response::HTTP_OK);
             
         } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Une erreur est survenue lors de la récupération des plats',
-                'error' => $e->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
