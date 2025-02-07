@@ -2,20 +2,23 @@
 
 namespace App\Controller;
 
+use App\Entity\Commande;
 use App\Entity\Mouvement;
+use App\Entity\Plat;
 use App\Repository\CommandeRepository;
 use App\Repository\PlatRepository;
-use App\Repository\RecetteRepository;
 use App\Repository\MouvementRepository;
+use App\Repository\RecetteRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Psr\Log\LoggerInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Service\FirebaseService;
 use App\Controller\CorsHeadersTrait;
+use App\Entity\Recette;
 
 #[Route('/api/commandes', name: 'api_commandes_')]
 class CommandeController extends AbstractController
@@ -48,42 +51,6 @@ class CommandeController extends AbstractController
         $this->commandeRepository = $commandeRepository;
     }
 
-    private function createSortieIngredients(int $platId, int $quantiteCommande): void
-    {
-        // Récupérer la recette du plat
-        $plat = $this->platRepository->find($platId);
-        if (!$plat) {
-            throw new \Exception("Plat non trouvé");
-        }
-
-        $recettes = $this->recetteRepository->findBy(['plat' => $plat]);
-        
-        if (empty($recettes)) {
-            throw new \Exception("Aucune recette trouvée pour ce plat");
-        }
-        
-        foreach ($recettes as $recette) {
-            // Calculer la quantité totale nécessaire
-            $quantiteTotale = $recette->getQuantite() * $quantiteCommande;
-            
-            // Vérifier le stock disponible
-            $stockActuel = $this->mouvementRepository->getStockActuel($recette->getIngredient()->getId());
-            if ($stockActuel < $quantiteTotale) {
-                throw new \Exception("Stock insuffisant pour l'ingrédient " . $recette->getIngredient()->getNom());
-            }
-            
-            // Créer le mouvement de sortie
-            $mouvement = new Mouvement();
-            $mouvement->setIngredient($recette->getIngredient())
-                     ->setSortie($quantiteTotale)
-                     ->setDateMouvement(new \DateTime());
-            
-            $this->entityManager->persist($mouvement);
-        }
-        
-        $this->entityManager->flush();
-    }
-
     private function formatCommandeDetails($commande): array
     {
         if (!$commande) {
@@ -91,15 +58,16 @@ class CommandeController extends AbstractController
         }
 
         $plat = $commande->getPlat();
+        
         return [
             'id' => $commande->getId(),
             'userId' => $commande->getUserId(),
-            'plat' => [
-                'id' => $plat ? $plat->getId() : null,
-                'nom' => $plat ? $plat->getNom() : null,
-                'sprite' => $plat ? $plat->getSprite() : null,
+            'plat' => $plat ? [
+                'id' => $plat->getId(),
+                'nom' => $plat->getNom(),
+                'sprite' => $plat->getSprite(),
                 'tempsCuisson' => $plat && $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
-            ],
+            ] : null,
             'quantite' => $commande->getQuantite(),
             'numeroTicket' => $commande->getNumeroTicket(),
             'statut' => $commande->getStatut(),
@@ -305,8 +273,7 @@ class CommandeController extends AbstractController
     {
         // Gérer la requête OPTIONS
         if ($request->getMethod() === 'OPTIONS') {
-            $response = new JsonResponse(null, 204);
-            return $this->corsResponse($response);
+            return $this->corsResponse(new JsonResponse(null, 204));
         }
 
         try {
@@ -317,96 +284,129 @@ class CommandeController extends AbstractController
             
             // Validation des champs requis
             if (!isset($data['userId']) || !isset($data['platId']) || !isset($data['quantite']) || !isset($data['numeroTicket'])) {
-                $response = $this->json([
+                return $this->corsResponse($this->json([
                     'success' => false,
                     'error' => 'Missing required fields',
                     'required' => ['userId', 'platId', 'quantite', 'numeroTicket'],
                     'received' => $data
-                ], 400);
-                return $this->corsResponse($response);
+                ], 400));
             }
 
             // Validation de la quantité
             if (!is_numeric($data['quantite']) || $data['quantite'] <= 0) {
-                $response = $this->json([
+                return $this->corsResponse($this->json([
                     'success' => false,
                     'error' => 'La quantité doit être un nombre positif'
-                ], 400);
-                return $this->corsResponse($response);
+                ], 400));
             }
 
             // Vérifier que le plat existe
             $plat = $this->platRepository->find($data['platId']);
             if (!$plat) {
-                $response = $this->json([
+                return $this->corsResponse($this->json([
                     'success' => false,
                     'error' => 'Plat non trouvé',
                     'platId' => $data['platId']
-                ], 404);
-                return $this->corsResponse($response);
+                ], 404));
             }
 
             // Vérifier que le numéro de ticket est au bon format (5 caractères)
             if (strlen($data['numeroTicket']) !== 5) {
-                $response = $this->json([
+                return $this->corsResponse($this->json([
                     'success' => false,
                     'error' => 'Le numéro de ticket doit contenir exactement 5 caractères'
-                ], 400);
-                return $this->corsResponse($response);
+                ], 400));
             }
 
+            // Créer la commande
+            $commande = new Commande();
+            $commande->setUserId($data['userId'])
+                    ->setPlatId($data['platId'])
+                    ->setPlat($plat)
+                    ->setQuantite($data['quantite'])
+                    ->setNumeroTicket($data['numeroTicket'])
+                    ->setStatut(0)
+                    ->setDateCommande(new \DateTime());
+
+            // Persister la commande
+            $this->entityManager->persist($commande);
+            
             try {
                 // Créer les mouvements de sortie des ingrédients
-                $this->createSortieIngredients($data['platId'], $data['quantite']);
+                $this->createSortieIngredients($plat, $data['quantite']);
+                
+                // Sauvegarder la commande
+                $this->entityManager->flush();
+                
+                // Log du succès
+                $this->logger->info('Commande créée avec succès:', [
+                    'commandeId' => $commande->getId(),
+                    'userId' => $data['userId'],
+                    'platId' => $data['platId']
+                ]);
+                
+                return $this->corsResponse($this->json([
+                    'success' => true,
+                    'data' => $this->formatCommandeDetails($commande)
+                ], 201));
+                
             } catch (\Exception $e) {
+                // Rollback en cas d'erreur
+                $this->entityManager->clear();
+                
                 $this->logger->error('Erreur lors de la création des mouvements:', [
                     'platId' => $data['platId'],
                     'quantite' => $data['quantite'],
                     'error' => $e->getMessage()
                 ]);
                 
-                $response = $this->json([
+                return $this->corsResponse($this->json([
                     'success' => false,
                     'error' => 'Erreur lors de la création des mouvements',
                     'message' => $e->getMessage()
-                ], 400);
-                return $this->corsResponse($response);
+                ], 400));
             }
-
-            // Créer la commande
-            $commande = $commandeRepository->createNewCommande(
-                $data['userId'],
-                $data['platId'],
-                $data['quantite'],
-                $data['numeroTicket']
-            );
-            
-            // Log du succès
-            $this->logger->info('Commande créée avec succès:', [
-                'commandeId' => $commande->getId(),
-                'userId' => $data['userId'],
-                'platId' => $data['platId']
-            ]);
-            
-            $response = $this->json([
-                'success' => true,
-                'data' => $this->formatCommandeDetails($commande)
-            ], 201);
             
         } catch (\Exception $e) {
             $this->logger->error('Error creating order: ' . $e->getMessage(), [
                 'exception' => $e,
                 'data' => $data ?? null,
+                'trace' => $e->getTraceAsString()
             ]);
-            $response = $this->json([
+            
+            return $this->corsResponse($this->json([
                 'success' => false,
                 'error' => 'An error occurred while creating the order',
                 'message' => $e->getMessage(),
-                'details' => $this->isDev() ? $e->getTrace() : null
-            ], 500);
+                'details' => $this->isDev() ? [
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ] : null
+            ], 500));
         }
+    }
 
-        return $this->corsResponse($response);
+    private function createSortieIngredients(Plat $plat, int $quantite): void
+    {
+        // Récupérer les ingrédients du plat
+        $recettes = $this->entityManager->getRepository(Recette::class)->findBy(['plat' => $plat]);
+        
+        foreach ($recettes as $recette) {
+            $ingredient = $recette->getIngredient();
+            $quantiteRequise = $recette->getQuantite();
+
+            // Créer un mouvement de sortie
+            $mouvement = new Mouvement();
+            $mouvement->setIngredient($ingredient)
+                     ->setSortie($quantite * $quantiteRequise)
+                     ->setDateMouvement(new \DateTime());
+
+            // Mettre à jour le stock
+            $ingredient->setQuantite($ingredient->getQuantite() - ($quantite * $quantiteRequise));
+            
+            $this->entityManager->persist($mouvement);
+        }
     }
 
     private function corsResponse(JsonResponse $response): JsonResponse
