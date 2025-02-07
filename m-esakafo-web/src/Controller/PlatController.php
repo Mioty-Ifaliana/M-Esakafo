@@ -17,6 +17,10 @@ class PlatController extends AbstractController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
+        if (isset($this->container) && $this->container->has('profiler')) {
+            $this->container->get('profiler')->disable();
+        }
+        
         try {
             $plats = $platRepository->getAllPlats();
             
