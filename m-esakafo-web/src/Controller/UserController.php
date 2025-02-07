@@ -80,7 +80,7 @@ class UserController extends AbstractController
     public function listAllUsers(): JsonResponse
     {
         try {
-            $users = $this->firebaseService->listAllUsers();
+            $users = $this->firebaseService->listAllUsersAdmin();
             
             return $this->json([
                 'status' => 'success',
@@ -93,7 +93,7 @@ class UserController extends AbstractController
         } catch (\Exception $e) {
             return $this->json([
                 'status' => 'error',
-                'message' => 'Erreur lors de la récupération des utilisateurs: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
