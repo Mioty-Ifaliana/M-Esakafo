@@ -17,36 +17,41 @@ class PlatController extends AbstractController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(PlatRepository $platRepository): JsonResponse
     {
-        $plats = $platRepository->getAllPlats();
-        
-        $platsArray = array_values(array_filter(array_map(function($plat) {
-            if (!$plat || !$plat->getId() || !$plat->getNom()) {
-                return null;
-            }
+        try {
+            $plats = $platRepository->getAllPlats();
             
-            return [
-                'id' => $plat->getId(),
-                'nom' => $plat->getNom(),
-                'sprite' => $plat->getSprite() ? trim($plat->getSprite()) : 'brochette.jpg',
-                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : '00:05:00',
-                'prix' => $plat->getPrix() ? $plat->getPrix() : '0.00'
-            ];
-        }, $plats)));
+            $platsArray = array_values(array_filter(array_map(function($plat) {
+                if (!$plat || !$plat->getId() || !$plat->getNom()) {
+                    return null;
+                }
+                
+                return [
+                    'id' => $plat->getId(),
+                    'nom' => $plat->getNom(),
+                    'sprite' => $plat->getSprite(),
+                    'tempsCuisson' => $plat->getTempsCuisson(),
+                    'prix' => $plat->getPrix()
+                ];
+            }, $plats)));
 
-        // Create a new JsonResponse with the array
-        $response = new JsonResponse($platsArray);
-        
-        // Add CORS headers
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
-        
-        // Disable debug output
-        if (function_exists('dump')) {
-            ob_clean();
+            return new JsonResponse([
+                'success' => true,
+                'message' => count($platsArray) . ' plats trouvés',
+                'data' => $platsArray
+            ], JsonResponse::HTTP_OK, [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type',
+                'Content-Type' => 'application/json; charset=utf-8'
+            ]);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la récupération des plats',
+                'error' => $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
-        
-        return $response;
     }
 
     #[Route('/{id}', name: 'get', methods: ['GET'])]
