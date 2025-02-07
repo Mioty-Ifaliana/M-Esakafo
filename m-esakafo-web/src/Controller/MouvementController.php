@@ -3,16 +3,31 @@
 namespace App\Controller;
 
 use App\Entity\Mouvement;
+use App\Entity\Ingredient;
 use App\Repository\MouvementRepository;
 use App\Repository\IngredientRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 #[Route('/api/mouvements')]
 class MouvementController extends AbstractController
 {
+    private $entityManager;
+    private $mouvementRepository;
+
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        MouvementRepository $mouvementRepository
+    ) {
+        $this->entityManager = $entityManager;
+        $this->mouvementRepository = $mouvementRepository;
+    }
+
     private function formatMouvementDetails($mouvement): array
     {
         $ingredient = $mouvement->getIngredient();
@@ -57,10 +72,10 @@ class MouvementController extends AbstractController
     }
 
     #[Route('/stocks', name: 'api_mouvements_stocks', methods: ['GET'])]
-    public function getAllStocks(MouvementRepository $mouvementRepository): JsonResponse
+    public function getAllStocks(): JsonResponse
     {
         try {
-            $stocks = $mouvementRepository->getAllStocks();
+            $stocks = $this->mouvementRepository->getAllStocks();
             $response = $this->json(array_map(
                 [$this, 'formatStockDetails'],
                 $stocks
@@ -82,7 +97,6 @@ class MouvementController extends AbstractController
     #[Route('', name: 'api_mouvements_create', methods: ['POST'])]
     public function create(
         Request $request,
-        MouvementRepository $mouvementRepository,
         IngredientRepository $ingredientRepository
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
@@ -113,7 +127,7 @@ class MouvementController extends AbstractController
                         $mouvement->setSortie($data['sortie']);
                     }
                     
-                    $mouvementRepository->save($mouvement);
+                    $this->mouvementRepository->save($mouvement);
                     
                     $response = $this->json($this->formatMouvementDetails($mouvement), 201);
                 }
@@ -133,10 +147,10 @@ class MouvementController extends AbstractController
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
-    public function list(MouvementRepository $mouvementRepository): JsonResponse
+    public function list(): JsonResponse
     {
         try {
-            $mouvements = $mouvementRepository->findAllMouvements();
+            $mouvements = $this->mouvementRepository->findAllMouvements();
             
             return $this->json([
                 'status' => 'success',
@@ -152,11 +166,11 @@ class MouvementController extends AbstractController
     }
 
     #[Route('/ingredient/{ingredientId}', name: 'api_mouvements_by_ingredient', methods: ['GET'])]
-    public function getByIngredient(int $ingredientId, MouvementRepository $mouvementRepository): JsonResponse
+    public function getByIngredient(int $ingredientId): JsonResponse
     {
         try {
-            $mouvements = $mouvementRepository->findByIngredientId($ingredientId);
-            $stockActuel = $mouvementRepository->getStockActuel($ingredientId);
+            $mouvements = $this->mouvementRepository->findByIngredientId($ingredientId);
+            $stockActuel = $this->mouvementRepository->getStockActuel($ingredientId);
             
             $response = $this->json([
                 'mouvements' => array_map([$this, 'formatMouvementDetails'], $mouvements),
@@ -177,19 +191,26 @@ class MouvementController extends AbstractController
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
-    public function update(Request $request, int $id, MouvementRepository $mouvementRepository): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
         try {
-            $mouvement = $mouvementRepository->find($id);
+            $mouvement = $this->mouvementRepository->find($id);
             
             if (!$mouvement) {
                 return $this->json([
                     'status' => 'error',
                     'message' => 'Mouvement non trouvé'
-                ], 404);
+                ], Response::HTTP_NOT_FOUND);
             }
             
             $data = json_decode($request->getContent(), true);
+            
+            if ($data === null) {
+                return $this->json([
+                    'status' => 'error',
+                    'message' => 'JSON invalide'
+                ], Response::HTTP_BAD_REQUEST);
+            }
             
             // Mise à jour des champs si présents dans la requête
             if (isset($data['entree'])) {
@@ -201,30 +222,45 @@ class MouvementController extends AbstractController
             }
             
             if (isset($data['dateMouvement'])) {
-                $dateMouvement = new \DateTime($data['dateMouvement']);
-                $mouvement->setDateMouvement($dateMouvement);
-            }
-            
-            if (isset($data['ingredient_id'])) {
-                $ingredient = $this->getDoctrine()->getRepository(Ingredient::class)->find($data['ingredient_id']);
-                if ($ingredient) {
-                    $mouvement->setIngredient($ingredient);
+                try {
+                    $dateMouvement = new \DateTime($data['dateMouvement']);
+                    $mouvement->setDateMouvement($dateMouvement);
+                } catch (\Exception $e) {
+                    return $this->json([
+                        'status' => 'error',
+                        'message' => 'Format de date invalide'
+                    ], Response::HTTP_BAD_REQUEST);
                 }
             }
             
-            $mouvementRepository->save($mouvement);
+            if (isset($data['ingredient_id'])) {
+                $ingredient = $this->entityManager
+                    ->getRepository(Ingredient::class)
+                    ->find($data['ingredient_id']);
+                    
+                if (!$ingredient) {
+                    return $this->json([
+                        'status' => 'error',
+                        'message' => 'Ingrédient non trouvé'
+                    ], Response::HTTP_NOT_FOUND);
+                }
+                
+                $mouvement->setIngredient($ingredient);
+            }
+            
+            $this->mouvementRepository->save($mouvement, true);
             
             return $this->json([
                 'status' => 'success',
                 'message' => 'Mouvement mis à jour avec succès',
                 'data' => $this->formatMouvementDetails($mouvement)
-            ], 200, [], ['groups' => ['mouvement:read']]);
+            ], Response::HTTP_OK);
             
         } catch (\Exception $e) {
             return $this->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
