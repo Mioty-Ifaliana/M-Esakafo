@@ -23,7 +23,7 @@ class PlatController extends AbstractController
             return $this->json([
                 'status' => 'success',
                 'data' => $plats
-            ], Response::HTTP_OK);
+            ], Response::HTTP_OK, [], ['groups' => ['plat:read']]);
             
         } catch (\Exception $e) {
             return $this->json([
