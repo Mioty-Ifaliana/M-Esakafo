@@ -28,9 +28,6 @@ class PlatRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
         
-        // Debug: Print the number of results
-        dump(count($result) . ' plats found');
-        
         return $result;
     }
 }
