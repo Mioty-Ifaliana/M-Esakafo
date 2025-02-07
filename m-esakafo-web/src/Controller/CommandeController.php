@@ -17,7 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Service\FirebaseService;
 use App\Controller\CorsHeadersTrait;
 
-#[Route('/api/commandes')]
+#[Route('/api/commandes', name: 'api_commandes_')]
 class CommandeController extends AbstractController
 {
     use CorsHeadersTrait;
@@ -234,7 +234,7 @@ class CommandeController extends AbstractController
         return $this->corsResponse($response);
     }
 
-    #[Route('', name: 'list', methods: ['GET'])]
+    #[Route('/list', name: 'list', methods: ['GET'])]
     public function list(): JsonResponse
     {
         try {
@@ -253,19 +253,19 @@ class CommandeController extends AbstractController
         }
     }
 
-    #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
+    #[Route('/options', name: 'api_commandes_options', methods: ['OPTIONS'])]
     public function options(): Response
     {
         return $this->handleOptionsRequest();
     }
 
-    #[Route('/{id}', name: 'api_commande_options', methods: ['OPTIONS'])]
+    #[Route('/{id}/options', name: 'api_commande_options', methods: ['OPTIONS'])]
     public function optionsId(): Response
     {
         return $this->handleOptionsRequest();
     }
 
-    #[Route('', name: 'api_commandes_create', methods: ['POST', 'OPTIONS'])]
+    #[Route('/create', name: 'api_commandes_create', methods: ['POST', 'OPTIONS'])]
     public function create(Request $request, CommandeRepository $commandeRepository): JsonResponse
     {
         // Gérer la requête OPTIONS
