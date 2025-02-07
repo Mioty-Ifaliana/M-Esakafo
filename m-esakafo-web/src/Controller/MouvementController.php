@@ -176,6 +176,58 @@ class MouvementController extends AbstractController
         return $response;
     }
 
+    #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    public function update(Request $request, int $id, MouvementRepository $mouvementRepository): JsonResponse
+    {
+        try {
+            $mouvement = $mouvementRepository->find($id);
+            
+            if (!$mouvement) {
+                return $this->json([
+                    'status' => 'error',
+                    'message' => 'Mouvement non trouvé'
+                ], 404);
+            }
+            
+            $data = json_decode($request->getContent(), true);
+            
+            // Mise à jour des champs si présents dans la requête
+            if (isset($data['entree'])) {
+                $mouvement->setEntree($data['entree']);
+            }
+            
+            if (isset($data['sortie'])) {
+                $mouvement->setSortie($data['sortie']);
+            }
+            
+            if (isset($data['dateMouvement'])) {
+                $dateMouvement = new \DateTime($data['dateMouvement']);
+                $mouvement->setDateMouvement($dateMouvement);
+            }
+            
+            if (isset($data['ingredient_id'])) {
+                $ingredient = $this->getDoctrine()->getRepository(Ingredient::class)->find($data['ingredient_id']);
+                if ($ingredient) {
+                    $mouvement->setIngredient($ingredient);
+                }
+            }
+            
+            $mouvementRepository->save($mouvement);
+            
+            return $this->json([
+                'status' => 'success',
+                'message' => 'Mouvement mis à jour avec succès',
+                'data' => $this->formatMouvementDetails($mouvement)
+            ], 200, [], ['groups' => ['mouvement:read']]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     #[Route('', name: 'api_mouvements_options', methods: ['OPTIONS'])]
     public function options(): JsonResponse
     {
