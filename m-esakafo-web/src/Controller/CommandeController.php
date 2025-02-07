@@ -264,7 +264,8 @@ class CommandeController extends AbstractController
                 0 => 'en attente',
                 1 => 'en cours de préparation',
                 2 => 'prêt',
-                3 => 'livré'
+                3 => 'livré',
+                4 => 'payé'
             ];
             
             $statusMessage = $statusMessages[$status] ?? 'statut inconnu';
