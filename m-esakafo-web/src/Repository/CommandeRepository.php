@@ -85,4 +85,12 @@ class CommandeRepository extends ServiceEntityRepository
             'nombre_plats' => (int)($result['nombrePlats'] ?? 0)
         ];
     }
+
+    public function findAllCommandes(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->orderBy('c.date_commande', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

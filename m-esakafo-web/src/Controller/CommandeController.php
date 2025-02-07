@@ -28,6 +28,7 @@ class CommandeController extends AbstractController
     private $mouvementRepository;
     private $entityManager;
     private $firebaseService;
+    private $commandeRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -35,7 +36,8 @@ class CommandeController extends AbstractController
         RecetteRepository $recetteRepository,
         MouvementRepository $mouvementRepository,
         EntityManagerInterface $entityManager,
-        FirebaseService $firebaseService
+        FirebaseService $firebaseService,
+        CommandeRepository $commandeRepository
     ) {
         $this->logger = $logger;
         $this->platRepository = $platRepository;
@@ -43,6 +45,7 @@ class CommandeController extends AbstractController
         $this->mouvementRepository = $mouvementRepository;
         $this->entityManager = $entityManager;
         $this->firebaseService = $firebaseService;
+        $this->commandeRepository = $commandeRepository;
     }
 
     private function createSortieIngredients(int $platId, int $quantiteCommande): void
@@ -229,6 +232,25 @@ class CommandeController extends AbstractController
         }
         
         return $this->corsResponse($response);
+    }
+
+    #[Route('', name: 'list', methods: ['GET'])]
+    public function list(): JsonResponse
+    {
+        try {
+            $commandes = $this->commandeRepository->findAllCommandes();
+            
+            return $this->json([
+                'status' => 'success',
+                'data' => $commandes
+            ], Response::HTTP_OK, [], ['groups' => ['commande:read']]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('', name: 'api_commandes_options', methods: ['OPTIONS'])]
