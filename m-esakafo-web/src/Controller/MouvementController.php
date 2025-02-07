@@ -150,12 +150,25 @@ class MouvementController extends AbstractController
     public function list(): JsonResponse
     {
         try {
+            // Récupérer tous les mouvements
             $mouvements = $this->mouvementRepository->findAllMouvements();
             
+            // Préparer les données à retourner
+            $data = [];
+            foreach ($mouvements as $mouvement) {
+                $data[] = [
+                    'id' => $mouvement->getId(),
+                    'ingredient' => $mouvement->getIngredient() ? $mouvement->getIngredient()->getNom() : null, // Détails de l'ingrédient
+                    'entre' => $mouvement->getEntree(),
+                    'sortie' => $mouvement->getSortie(),
+                    'date' => $mouvement->getDateMouvement()->format('Y-m-d H:i:s'),
+                ];
+            }
+    
             return $this->json([
                 'status' => 'success',
-                'data' => $mouvements
-            ], 200, [], ['groups' => ['mouvement:read']]);
+                'data' => $data
+            ], 200);
             
         } catch (\Exception $e) {
             return $this->json([
