@@ -14,23 +14,23 @@ class Plat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['plat:read'])]
+    #[Groups(['plat:read', 'commande:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['plat:read'])]
+    #[Groups(['plat:read', 'commande:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['plat:read'])]
+    #[Groups(['plat:read', 'commande:read'])]
     private ?string $sprite = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
-    #[Groups(['plat:read'])]
+    #[Groups(['plat:read', 'commande:read'])]
     private ?\DateTimeInterface $tempsCuisson = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
-    #[Groups(['plat:read'])]
+    #[Groups(['plat:read', 'commande:read'])]
     private ?string $prix = null;
 
     public function getId(): ?int

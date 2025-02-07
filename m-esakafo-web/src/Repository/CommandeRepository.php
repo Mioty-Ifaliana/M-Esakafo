@@ -89,6 +89,8 @@ class CommandeRepository extends ServiceEntityRepository
     public function findAllCommandes(): array
     {
         return $this->createQueryBuilder('c')
+            ->leftJoin('c.plat', 'p')
+            ->addSelect('p')
             ->orderBy('c.date_commande', 'DESC')
             ->getQuery()
             ->getResult();

@@ -20,27 +20,32 @@ class Commande
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['commande:read'])]
     private ?string $userId = null;
+
+    #[ORM\Column(length: 255)]
+    #[Groups(['commande:read'])]
+    private ?string $numero_ticket = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['commande:read'])]
+    private ?\DateTimeInterface $date_commande = null;
+
+    #[ORM\Column]
+    #[Groups(['commande:read'])]
+    private ?int $statut = 0;
 
     #[ORM\ManyToOne(targetEntity: Plat::class)]
     #[ORM\JoinColumn(name: 'plat_id', referencedColumnName: 'id')]
+    #[Groups(['commande:read'])]
     private ?Plat $plat = null;
 
     #[ORM\Column(name: 'plat_id')]
     private ?int $platId = null;
 
     #[ORM\Column]
-    private ?int $quantite = null;
-
-    #[ORM\Column(length: 5)]
-    private ?string $numero_ticket = null;
-
-    #[ORM\Column]
-    private ?int $statut = 0;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['commande:read'])]
-    private ?\DateTimeInterface $date_commande = null;
+    private ?int $quantite = null;
 
     public function getId(): ?int
     {
