@@ -80,8 +80,10 @@ class UserController extends AbstractController
     public function listAllUsers(): JsonResponse
     {
         try {
+            error_log('Début de listAllUsers dans UserController');
             $users = $this->firebaseService->listAllUsers();
             
+            error_log('Utilisateurs récupérés avec succès dans le contrôleur');
             return $this->json([
                 'status' => 'success',
                 'data' => [
@@ -91,13 +93,16 @@ class UserController extends AbstractController
             ]);
             
         } catch (\Exception $e) {
-            // Log l'erreur pour le débogage
-            error_log('Controller Error: ' . $e->getMessage());
+            error_log('Erreur dans UserController::listAllUsers : ' . $e->getMessage());
             
+            // Retourner un message d'erreur plus détaillé
             return $this->json([
                 'status' => 'error',
-                'message' => 'Une erreur est survenue lors de la récupération des utilisateurs',
-                'error' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'details' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

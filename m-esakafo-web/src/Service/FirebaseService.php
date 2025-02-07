@@ -18,6 +18,8 @@ class FirebaseService
     public function listAllUsers()
     {
         try {
+            error_log('Tentative de connexion admin...');
+            
             // D'abord, se connecter en tant qu'admin
             $signInResponse = $this->httpClient->request(
                 'POST',
@@ -35,12 +37,14 @@ class FirebaseService
             );
 
             $signInData = $signInResponse->toArray();
-            $idToken = $signInData['idToken'] ?? null;
-
-            if (!$idToken) {
-                throw new \Exception('Échec de l\'authentification admin');
+            
+            if (!isset($signInData['idToken'])) {
+                error_log('Échec de l\'authentification. Réponse reçue : ' . json_encode($signInData));
+                throw new \Exception('Échec de l\'authentification : ' . (isset($signInData['error']['message']) ? $signInData['error']['message'] : 'Token non reçu'));
             }
 
+            error_log('Authentification réussie, récupération des utilisateurs...');
+            
             // Utiliser le token pour obtenir la liste des utilisateurs
             $response = $this->httpClient->request(
                 'POST',
@@ -50,15 +54,20 @@ class FirebaseService
                         'key' => $this->apiKey
                     ],
                     'json' => [
-                        'idToken' => $idToken
+                        'idToken' => $signInData['idToken']
                     ]
                 ]
             );
 
             $data = $response->toArray();
-            $users = $data['users'] ?? [];
+            
+            if (!isset($data['users'])) {
+                error_log('Pas d\'utilisateurs trouvés. Réponse reçue : ' . json_encode($data));
+                throw new \Exception('Aucun utilisateur trouvé' . (isset($data['error']['message']) ? ' : ' . $data['error']['message'] : ''));
+            }
 
-            // Formater la réponse
+            error_log('Utilisateurs récupérés avec succès. Nombre d\'utilisateurs : ' . count($data['users']));
+            
             return array_map(function($user) {
                 return [
                     'uid' => $user['localId'] ?? null,
@@ -68,12 +77,12 @@ class FirebaseService
                     'lastLoginAt' => $user['lastLoginAt'] ?? null,
                     'createdAt' => $user['createdAt'] ?? null
                 ];
-            }, $users);
+            }, $data['users']);
 
         } catch (\Exception $e) {
-            // Log l'erreur pour le débogage
-            error_log('Firebase Error: ' . $e->getMessage());
-            throw new \Exception('Erreur lors de la récupération des utilisateurs');
+            error_log('Erreur détaillée dans FirebaseService::listAllUsers : ' . $e->getMessage());
+            error_log('Trace : ' . $e->getTraceAsString());
+            throw $e; // Propager l'erreur avec le message original
         }
     }
 
