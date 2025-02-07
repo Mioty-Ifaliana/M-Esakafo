@@ -26,7 +26,7 @@ class FirebaseService
                     'key' => $this->apiKey
                 ],
                 'json' => [
-                    'idToken' => $idToken
+                    'idToken' => $idToken 
                 ]
             ]);
 
