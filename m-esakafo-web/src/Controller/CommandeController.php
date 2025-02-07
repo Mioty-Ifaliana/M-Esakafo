@@ -399,8 +399,8 @@ class CommandeController extends AbstractController
             $this->entityManager->persist($mouvement);
         }
     }
-    
-    #[Route('/api/commandes/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
+
+    #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
     public function updateStatut(Request $request, int $id): JsonResponse
     {
         // Récupérer la commande par ID
