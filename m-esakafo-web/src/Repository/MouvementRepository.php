@@ -94,4 +94,14 @@ class MouvementRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findAllMouvements(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->leftJoin('m.ingredient', 'i')
+            ->addSelect('i')
+            ->orderBy('m.dateMouvement', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

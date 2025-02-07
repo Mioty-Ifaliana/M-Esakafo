@@ -132,6 +132,25 @@ class MouvementController extends AbstractController
         return $response;
     }
 
+    #[Route('', name: 'list', methods: ['GET'])]
+    public function list(MouvementRepository $mouvementRepository): JsonResponse
+    {
+        try {
+            $mouvements = $mouvementRepository->findAllMouvements();
+            
+            return $this->json([
+                'status' => 'success',
+                'data' => $mouvements
+            ], 200, [], ['groups' => ['mouvement:read']]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     #[Route('/ingredient/{ingredientId}', name: 'api_mouvements_by_ingredient', methods: ['GET'])]
     public function getByIngredient(int $ingredientId, MouvementRepository $mouvementRepository): JsonResponse
     {

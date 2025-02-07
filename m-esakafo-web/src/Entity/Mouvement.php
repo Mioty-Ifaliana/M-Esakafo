@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\MouvementRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: MouvementRepository::class)]
 #[ORM\Table(name: 'mouvements')]
@@ -13,19 +14,24 @@ class Mouvement
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['mouvement:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Ingredient::class)]
     #[ORM\JoinColumn(name: "id_ingredient", referencedColumnName: "id", nullable: false)]
+    #[Groups(['mouvement:read'])]
     private ?Ingredient $ingredient = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['mouvement:read'])]
     private ?int $entree = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['mouvement:read'])]
     private ?int $sortie = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['mouvement:read'])]
     private ?\DateTimeInterface $dateMouvement = null;
 
     public function getId(): ?int
