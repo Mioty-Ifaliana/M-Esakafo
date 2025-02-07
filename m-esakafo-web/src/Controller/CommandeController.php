@@ -390,11 +390,11 @@ class CommandeController extends AbstractController
             // Créer un mouvement de sortie
             $mouvement = new Mouvement();
             $mouvement->setIngredient($ingredient)
-                     ->setSortie($quantite * $quantiteRequise)
+                     ->setSortie($quantiteSortie)
                      ->setDateMouvement(new \DateTime());
 
-            // Mettre à jour le stock
-            $ingredient->setQuantite($ingredient->getQuantite() - ($quantite * $quantiteRequise));
+            // // Mettre à jour le stock
+            // $ingredient->setQuantite($ingredient->getQuantite() - ($quantiteSortie));
             
             $this->entityManager->persist($mouvement);
         }
