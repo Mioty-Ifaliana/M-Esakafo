@@ -399,6 +399,29 @@ class CommandeController extends AbstractController
             $this->entityManager->persist($mouvement);
         }
     }
+    
+    #[Route('/api/commandes/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
+    public function updateStatut(Request $request, int $id): JsonResponse
+    {
+        // Récupérer la commande par ID
+        $commande = $this->entityManager->getRepository(Commande::class)->find($id);
+
+        if (!$commande) {
+            return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
+        }
+
+        // Récupérer le nouveau statut depuis la requête
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['statut'])) {
+            $commande->setStatut($data['statut']); // Assurez-vous que la méthode setStatut existe dans votre entité Commande
+            $this->entityManager->flush(); // Persist les changements
+
+            return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
+        }
+
+        return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
+    }
 
     private function corsResponse(JsonResponse $response): JsonResponse
     {
