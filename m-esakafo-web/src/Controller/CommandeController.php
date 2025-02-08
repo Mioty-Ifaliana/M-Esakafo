@@ -427,61 +427,8 @@ class CommandeController extends AbstractController
     // }
 
 
-<<<<<<< HEAD
-        if (!$commande) {
-            return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
-        }
 
-        $data = json_decode($request->getContent(), true);
-        if (isset($data['statut'])) {
-            $commande->setStatut($data['statut']);
-            $this->entityManager->flush();
 
-            // 🔥 Ajouter dans Firestore si statut = 3
-            if ($data['statut'] == 3) {
-                $factory = (new Factory)->withServiceAccount(__DIR__.'/../config/firebase_credentials.json');
-                $firestore = $factory->createFirestore();
-                $database = $firestore->database();
-
-                $database->collection('notifications')->add([
-                    'userId' => $commande->getUser()->getId(),  // Assurez-vous que l'entité Commande a une relation User
-                    'message' => "Votre commande est prête !",
-                    'timestamp' => new \DateTime(),
-                ]);
-            }
-
-            return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
-        }
-
-        return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
-    }
-=======
-
-    #[Route('/test-insert', name: 'test_insert_firestore', methods: ['POST'])]
-    public function testInsertToFirestore(Request $request): JsonResponse
-    {
-        // Retrieve data from the request
-        $data = json_decode($request->getContent(), true);
-
-        // Validate the data (you can add more validation as needed)
-        if (!isset($data['collection']) || !isset($data['document'])) {
-            return $this->json(['status' => 'error', 'message' => 'Collection and document data are required'], 400);
-        }
-
-        // Insert data into Firestore
-        $this->insertToFirestore($data['collection'], $data['document']);
-
-        return $this->json(['status' => 'success', 'message' => 'Data inserted successfully'], 200);
-    }
-    
-    private function insertToFirestore(string $collection, array $data): void
-    {
-        $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
-        $factory = (new Factory)->withServiceAccount($firebaseCredentials);
-        $firestore = $factory->createFirestore();
-        $database = $firestore->database();
-        $database->collection($collection)->add($data);
-    }
 
     // #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
     // public function updateStatut(Request $request, int $id): JsonResponse
@@ -517,7 +464,6 @@ class CommandeController extends AbstractController
     //     return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
     // }
 
->>>>>>> 17644e7 (Firestore V3)
 
     private function corsResponse(JsonResponse $response): JsonResponse
     {
