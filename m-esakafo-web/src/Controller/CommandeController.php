@@ -387,7 +387,7 @@ class CommandeController extends AbstractController
                     'stock_actuel' => $stockActuel,
                     'quantite_requise' => $quantiteSortie
                 ]);
-                throw new \Exception("Stock insuffisant pour l'ingrédient: " . $ingredient->getNom());
+                throw new \Exception("Rupture de stock du produit");
             }
 
             // Créer un mouvement de sortie
