@@ -7,15 +7,15 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": "^2.13",
-        "doctrine/doctrine-migrations-bundle": "^3.4",
-        "doctrine/orm": "^3.3",
+        "doctrine/doctrine-bundle": "^2.13.2",
+        "doctrine/doctrine-migrations-bundle": "^3.4.1",
+        "doctrine/orm": "^3.3.2",
         "firebase/php-jwt": "^6.11",
-        "kreait/firebase-php": "^5.26",
-        "nelmio/cors-bundle": "^2.4",
+        "kreait/firebase-php": "^5.26.5",
+        "nelmio/cors-bundle": "^2.5",
         "symfony/console": "7.2.*",
         "symfony/dotenv": "7.2.*",
-        "symfony/flex": "^2",
+        "symfony/flex": "^2.4.7",
         "symfony/framework-bundle": "7.2.*",
         "symfony/http-client": "7.2.*",
         "symfony/property-access": "7.2.*",
@@ -74,6 +74,6 @@
         }
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.62"
+        "symfony/maker-bundle": "^1.62.1"
     }
 }

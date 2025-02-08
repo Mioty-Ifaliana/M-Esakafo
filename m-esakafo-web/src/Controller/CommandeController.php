@@ -19,6 +19,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use App\Service\FirebaseService;
 use App\Controller\CorsHeadersTrait;
 use App\Entity\Recette;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\ServiceAccount;
+use Kreait\Firebase\Firestore;
 
 #[Route('/api/commandes', name: 'api_commandes_')]
 class CommandeController extends AbstractController
@@ -400,22 +403,55 @@ class CommandeController extends AbstractController
         }
     }
 
+    // #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
+    // public function updateStatut(Request $request, int $id): JsonResponse
+    // {
+    //     // Récupérer la commande par ID
+    //     $commande = $this->entityManager->getRepository(Commande::class)->find($id);
+
+    //     if (!$commande) {
+    //         return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
+    //     }
+
+    //     // Récupérer le nouveau statut depuis la requête
+    //     $data = json_decode($request->getContent(), true);
+
+    //     if (isset($data['statut'])) {
+    //         $commande->setStatut($data['statut']); // Assurez-vous que la méthode setStatut existe dans votre entité Commande
+    //         $this->entityManager->flush(); // Persist les changements
+
+    //         return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
+    //     }
+
+    //     return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
+    // }
+
     #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
     public function updateStatut(Request $request, int $id): JsonResponse
     {
-        // Récupérer la commande par ID
         $commande = $this->entityManager->getRepository(Commande::class)->find($id);
 
         if (!$commande) {
             return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
         }
 
-        // Récupérer le nouveau statut depuis la requête
         $data = json_decode($request->getContent(), true);
-
         if (isset($data['statut'])) {
-            $commande->setStatut($data['statut']); // Assurez-vous que la méthode setStatut existe dans votre entité Commande
-            $this->entityManager->flush(); // Persist les changements
+            $commande->setStatut($data['statut']);
+            $this->entityManager->flush();
+
+            // 🔥 Ajouter dans Firestore si statut = 3
+            if ($data['statut'] == 3) {
+                $factory = (new Factory)->withServiceAccount(_DIR_.'/../config/firebase_credentials.json');
+                $firestore = $factory->createFirestore();
+                $database = $firestore->database();
+
+                $database->collection('notifications')->add([
+                    'userId' => $commande->getUser()->getId(),  // Assurez-vous que l'entité Commande a une relation User
+                    'message' => "Votre commande est prête !",
+                    'timestamp' => new \DateTime(),
+                ]);
+            }
 
             return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
         }
