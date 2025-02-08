@@ -7,4 +7,5 @@
 /public/bundles/
 /var/
 /vendor/
+/config/firebase_credentials.json
 ###< symfony/framework-bundle ###
