@@ -442,7 +442,7 @@ class CommandeController extends AbstractController
 
             // 🔥 Ajouter dans Firestore si statut = 3
             if ($data['statut'] == 3) {
-                $factory = (new Factory)->withServiceAccount(_DIR_.'/../config/firebase_credentials.json');
+                $factory = (new Factory)->withServiceAccount(__DIR__.'/../config/firebase_credentials.json');
                 $firestore = $factory->createFirestore();
                 $database = $firestore->database();
 
