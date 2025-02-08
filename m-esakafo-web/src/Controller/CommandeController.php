@@ -431,10 +431,9 @@ class CommandeController extends AbstractController
 
 
     #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
-    public function updateStatut(Request $request, int $id): JsonResponse
+    public function updateStatut(Request $request, int $id, LoggerInterface $logger): JsonResponse
     {
         $commande = $this->entityManager->getRepository(Commande::class)->find($id);
-    
         if (!$commande) {
             return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
         }
@@ -444,18 +443,22 @@ class CommandeController extends AbstractController
             $commande->setStatut($data['statut']);
             $this->entityManager->flush();
     
-            // 🔥 Ajouter dans Firestore si statut = 3
             if ($data['statut'] == 3) {
-                $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
-                $factory = (new Factory)->withServiceAccount($firebaseCredentials);
-                $firestore = $factory->createFirestore();
-                $database = $firestore->database();
+                try {
+                    $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
+                    $factory = (new Factory)->withServiceAccount($firebaseCredentials);
+                    $firestore = $factory->createFirestore();
+                    $database = $firestore->database();
     
-                $database->collection('notifications')->add([
-                    'userId' => $commande->getUser()->getId(),
-                    'message' => "Votre commande est prête !",
-                    'timestamp' => (new \DateTime())->format('c'),
-                ]);
+                    $database->collection('notifications')->add([
+                        'userId' => $commande->getUser()->getId(),
+                        'message' => "Votre commande est prête !",
+                        'timestamp' => (new \DateTime())->format('c'),
+                    ]);
+                } catch (\Exception $e) {
+                    $logger->error('Error inserting into Firestore: ' . $e->getMessage());
+                    return $this->json(['status' => 'error', 'message' => 'Erreur lors de l\'insertion dans Firestore'], 500);
+                }
             }
     
             return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
