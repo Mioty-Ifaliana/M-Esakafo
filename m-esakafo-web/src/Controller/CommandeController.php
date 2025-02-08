@@ -446,15 +446,24 @@ class CommandeController extends AbstractController
             if ($data['statut'] == 3) {
                 try {
                     $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
+                    $logger->error('Error firebaseCredentials');
+
                     $factory = (new Factory)->withServiceAccount($firebaseCredentials);
+                    $logger->error('Error factory');
+
                     $firestore = $factory->createFirestore();
+                    $logger->error('Error firestore');
+
                     $database = $firestore->database();
-    
+                    $logger->error('Error database');
+
                     $database->collection('notifications')->add([
                         'userId' => $commande->getUser()->getId(),
                         'message' => "Votre commande est prête !",
                         'timestamp' => (new \DateTime())->format('c'),
                     ]);
+                    $logger->error('Error database collection');
+
                 } catch (\Exception $e) {
                     $logger->error('Error inserting into Firestore: ' . $e->getMessage());
                     return $this->json(['status' => 'error', 'message' => 'Erreur lors de l\'insertion dans Firestore'], 500);
