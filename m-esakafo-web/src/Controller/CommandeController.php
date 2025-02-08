@@ -445,8 +445,15 @@ class CommandeController extends AbstractController
     
             if ($data['statut'] == 3) {
                 try {
-                    $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
-                    $logger->error('Error firebaseCredentials');
+                     // Read the Firebase credentials from the file
+    $firebaseCredentialsJson = file_get_contents($_ENV['FIREBASE_CREDENTIALS']);
+    $firebaseCredentials = json_decode($firebaseCredentialsJson, true);
+
+    // Check for JSON errors
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $logger->error('JSON decode error: ' . json_last_error_msg());
+        return $this->json(['status' => 'error', 'message' => 'Invalid Firebase credentials'], 500);
+    }
 
                     $factory = (new Factory)->withServiceAccount($firebaseCredentials);
                     $logger->error('Error factory');
