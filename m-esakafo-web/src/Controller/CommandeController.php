@@ -430,39 +430,39 @@ class CommandeController extends AbstractController
 
 
 
-    // #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
-    // public function updateStatut(Request $request, int $id): JsonResponse
-    // {
-    //     $commande = $this->entityManager->getRepository(Commande::class)->find($id);
+    #[Route('/{id}/statut', name: 'update_commande_statut', methods: ['PUT'])]
+    public function updateStatut(Request $request, int $id): JsonResponse
+    {
+        $commande = $this->entityManager->getRepository(Commande::class)->find($id);
     
-    //     if (!$commande) {
-    //         return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
-    //     }
+        if (!$commande) {
+            return $this->json(['status' => 'error', 'message' => 'Commande non trouvée'], 404);
+        }
     
-    //     $data = json_decode($request->getContent(), true);
-    //     if (isset($data['statut'])) {
-    //         $commande->setStatut($data['statut']);
-    //         $this->entityManager->flush();
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['statut'])) {
+            $commande->setStatut($data['statut']);
+            $this->entityManager->flush();
     
-    //         // 🔥 Ajouter dans Firestore si statut = 3
-    //         if ($data['statut'] == 3) {
-    //             $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
-    //             $factory = (new Factory)->withServiceAccount($firebaseCredentials);
-    //             $firestore = $factory->createFirestore();
-    //             $database = $firestore->database();
+            // 🔥 Ajouter dans Firestore si statut = 3
+            if ($data['statut'] == 3) {
+                $firebaseCredentials = json_decode($_ENV['FIREBASE_CREDENTIALS'], true);
+                $factory = (new Factory)->withServiceAccount($firebaseCredentials);
+                $firestore = $factory->createFirestore();
+                $database = $firestore->database();
     
-    //             $database->collection('notifications')->add([
-    //                 'userId' => $commande->getUser()->getId(),
-    //                 'message' => "Votre commande est prête !",
-    //                 'timestamp' => (new \DateTime())->format('c'),
-    //             ]);
-    //         }
+                $database->collection('notifications')->add([
+                    'userId' => $commande->getUser()->getId(),
+                    'message' => "Votre commande est prête !",
+                    'timestamp' => (new \DateTime())->format('c'),
+                ]);
+            }
     
-    //         return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
-    //     }
+            return $this->json(['status' => 'success', 'message' => 'Statut mis à jour avec succès'], 200);
+        }
     
-    //     return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
-    // }
+        return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
+    }
 
 
     private function corsResponse(JsonResponse $response): JsonResponse
