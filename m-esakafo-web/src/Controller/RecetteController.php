@@ -259,12 +259,6 @@ class RecetteController extends AbstractController
                     if ($ingredient) {
                         // Log de l'ingrédient trouvé
                         error_log("Mise à jour de l'ingrédient ID: $ingredientId avec quantité: $quantite");
-                        
-                        // Mettre à jour la quantité de l'ingrédient dans la recette
-                        $recetteIngredient = $recette->getIngredient(); // Assurez-vous que cette méthode existe
-                        if ($recetteIngredient && $recetteIngredient->getId() === $ingredientId) {
-                            $recetteIngredient->setQuantite($quantite); // Assurez-vous que cette méthode existe
-                        }
                     }
                 }
             }

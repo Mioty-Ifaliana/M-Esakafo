@@ -132,7 +132,7 @@ class CommandeController extends AbstractController
                 $plat = $this->platRepository->find($commande->getPlatId());
                 if ($plat) {
                     $results[] = [
-                        'message' => sprintf('Le plat : %s est terminé', $plat->getNom())
+                        'message' => sprintf('Le plat : %s - %s est terminé',$commande->getNumeroTicket(), $plat->getNom())
                     ];
                 }
             }
