@@ -104,8 +104,12 @@ class PlatController extends AbstractController
             $plat->setSprite($data['sprite']);
         }
         if (isset($data['temps_cuisson'])) {     
-            $plat->setTempsCuisson( \DateTime::createFromFormat('H:i:s', $data['temps_cuisson']));
-        }
+            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $data['temps_cuisson'])) {
+                $plat->setTempsCuisson($data['temps_cuisson']); // Stockez en tant que chaîne
+            } else {
+                return $this->json(['status' => 'error', 'message' => 'Format de temps de cuisson invalide'], 400);
+            }
+                }
         if (isset($data['prix'])) {
             $plat->setPrix($data['prix']);
         }
