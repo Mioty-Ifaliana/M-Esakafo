@@ -178,7 +178,7 @@ class MouvementController extends AbstractController
         }
     }
 
-    #[Route('/mouvements', name: 'get_all_ingredient_movements', methods: ['GET'])]
+    #[Route('/mouvement_ingredient', name: 'get_all_ingredient_movements', methods: ['GET'])]
     public function getAllIngredientMovements(MouvementRepository $mouvementRepository, IngredientRepository $ingredientRepository): JsonResponse
     {
         // Récupérer tous les ingrédients
@@ -218,7 +218,7 @@ class MouvementController extends AbstractController
         return $this->json($result);
     }
 
-    
+
     #[Route('/ingredient/{ingredientId}', name: 'api_mouvements_by_ingredient', methods: ['GET'])]
     public function getByIngredient(int $ingredientId): JsonResponse
     {
