@@ -3,6 +3,8 @@ FROM php:8.2.12-cli
 
 # Installer les dépendances système nécessaires
 RUN apt-get update && apt-get install -y \
+    libgrpc-dev \
+    && docker-php-ext-install grpc \
     zip \
     unzip \
     git \
@@ -20,6 +22,7 @@ RUN apt-get update && apt-get install -y \
         zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+    
 
 # Installer Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
