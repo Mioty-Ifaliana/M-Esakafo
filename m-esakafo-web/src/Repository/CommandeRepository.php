@@ -58,7 +58,7 @@ class CommandeRepository extends ServiceEntityRepository
             ->addSelect('SUM(c.quantite * p.prix) as totalVentes')
             ->innerJoin('c.plat', 'p')
             ->where('c.statut = :statut')
-            ->setParameter('statut', 4)
+            ->setParameter('statut', 3)
             ->groupBy('p.id')
             ->addGroupBy('p.nom')
             ->addGroupBy('p.prix')

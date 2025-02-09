@@ -150,13 +150,9 @@ class CommandeController extends AbstractController
     public function getVentesTotales(CommandeRepository $commandeRepository): JsonResponse
     {
         try {
-            // Récupérer les ventes par plat
             $ventesParPlat = $commandeRepository->getTotalVentesParPlat();
             
-            // Récupérer les totaux globaux
             $totauxGlobaux = $commandeRepository->getTotalGlobal();
-            
-            // Formater les données pour inclure des statistiques supplémentaires
             $ventesFormatees = array_map(function($vente) use ($totauxGlobaux) {
                 return [
                     'plat' => [

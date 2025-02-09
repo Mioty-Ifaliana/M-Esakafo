@@ -194,40 +194,44 @@ class RecetteController extends AbstractController
     {
         // Récupérer toutes les recettes pour le plat donné
         $recettes = $recetteRepository->findBy(['plat' => $platId]);
-
-        if (empty($recettes)) {
-            return $this->json(['status' => 'error', 'message' => 'Aucune recette trouvée pour ce plat'], 404);
-        }
-
+    
         $result = [];
         foreach ($recettes as $recette) {
             $plat = $recette->getPlat();
             $ingredient = $recette->getIngredient(); // Récupérer un seul ingrédient
-
+    
             if ($plat) {
-                $result[] = [
-                    'platId' => $plat->getId(),
-                    'platNom' => $plat->getNom(),
-                    'platSprite' => $plat->getSprite(),
-                    'platPrix' => $plat->getPrix(),
-                    'platTempsCuisson' => $plat->getTempsCuisson(),
-                    'ingredients' => []
-                ];
-            }
-            if ($ingredient) {
-                $result[count($result) - 1]['ingredients'][] = [
-                    'id' => $ingredient->getId(),
-                    'nom' => $ingredient->getNom(),
-                    'sprite' => $ingredient->getSprite(),
-                    'unite' => [
-                        'id' => $ingredient->getUnite()->getId(),
-                        'nom' => $ingredient->getUnite()->getNom(),
-                    ],
-                    'quantite' => $recette->getQuantite(),
-                ];
+                $platId = $plat->getId();
+                // Si le plat n'est pas encore dans le résultat, l'ajouter
+                if (!isset($result[$platId])) {
+                    $result[$platId] = [
+                        'platId' => $platId,
+                        'platNom' => $plat->getNom(),
+                        'platSprite' => $plat->getSprite(),
+                        'platPrix' => $plat->getPrix(),
+                        'platTempsCuisson' => $plat->getTempsCuisson(),
+                        'ingredients' => []
+                    ];
+                }
+    
+                if ($ingredient) {
+                    $result[$platId]['ingredients'][] = [
+                        'id' => $ingredient->getId(),
+                        'nom' => $ingredient->getNom(),
+                        'sprite' => $ingredient->getSprite(),
+                        'unite' => [
+                            'id' => $ingredient->getUnite()->getId(),
+                            'nom' => $ingredient->getUnite()->getNom(),
+                        ],
+                        'quantite' => $recette->getQuantite(),
+                    ];
+                }
             }
         }
-
+    
+        // Réindexer le tableau pour obtenir un tableau simple
+        $result = array_values($result);
+    
         return $this->json($result);
     }
 }
