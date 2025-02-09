@@ -235,7 +235,7 @@ class RecetteController extends AbstractController
         return $this->json($result);
     }
 
-    #[Route('/recette/{id}', name: 'update_recette', methods: ['PUT'])]
+    #[Route('/{id}', name: 'update_recette', methods: ['PUT'])]
     public function updateRecette(int $id, Request $request, RecetteRepository $recetteRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $recette = $recetteRepository->find($id);
