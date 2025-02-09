@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Recette;
+use App\Entity\Ingredient;
 use App\Repository\RecetteRepository;
 use App\Repository\PlatRepository;
 use App\Repository\IngredientRepository;
@@ -10,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/api/recettes')]
 class RecetteController extends AbstractController
@@ -229,10 +231,43 @@ class RecetteController extends AbstractController
             }
         }
     
-        // Réindexer le tableau pour obtenir un tableau simple
-        $result = array_values($result);
-    
+        $result = array_values($result);  
         return $this->json($result);
+    }
+
+    #[Route('/recette/{id}', name: 'update_recette', methods: ['PUT'])]
+    public function updateRecette(int $id, Request $request, RecetteRepository $recetteRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $recette = $recetteRepository->find($id);
+        if (!$recette) {
+            return $this->json(['status' => 'error', 'message' => 'Recette non trouvée'], 404);
+        }
+    
+        $data = json_decode($request->getContent(), true);
+    
+        if (isset($data['quantite'])) {
+            $recette->setQuantite($data['quantite']);
+        }
+    
+        // Mettre à jour les ingrédients
+        if (isset($data['ingredients'])) {
+            foreach ($data['ingredients'] as $ingredientData) {
+                $ingredientId = $ingredientData['id'] ?? null;
+                $quantite = $ingredientData['quantite'] ?? null;
+    
+                // Logique pour mettre à jour l'ingrédient associé à la recette
+                if ($ingredientId && $quantite) {
+                    $ingredient = $entityManager->getRepository(Ingredient::class)->find($ingredientId);
+                    if ($ingredient) {
+                        $recette->setQuantite($quantite);
+                    }
+                }
+            }
+        }
+    
+        $entityManager->flush();
+    
+        return $this->json(['status' => 'success', 'message' => 'Recette mise à jour avec succès']);
     }
 }
 
