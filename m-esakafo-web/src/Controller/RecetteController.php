@@ -245,10 +245,6 @@ class RecetteController extends AbstractController
     
         $data = json_decode($request->getContent(), true);
     
-        if (isset($data['quantite'])) {
-            $recette->setQuantite($data['quantite']);
-        }
-    
         // Mettre à jour les ingrédients
         if (isset($data['ingredients'])) {
             foreach ($data['ingredients'] as $ingredientData) {
