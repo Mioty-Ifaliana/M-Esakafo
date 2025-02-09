@@ -244,6 +244,9 @@ class RecetteController extends AbstractController
         }
     
         $data = json_decode($request->getContent(), true);
+        
+        // Log des données reçues
+        error_log(print_r($data, true));
     
         // Mettre à jour les ingrédients
         if (isset($data['ingredients'])) {
@@ -251,10 +254,11 @@ class RecetteController extends AbstractController
                 $ingredientId = $ingredientData['id'] ?? null;
                 $quantite = $ingredientData['quantite'] ?? null;
     
-                // Logique pour mettre à jour l'ingrédient associé à la recette
                 if ($ingredientId && $quantite) {
                     $ingredient = $entityManager->getRepository(Ingredient::class)->find($ingredientId);
                     if ($ingredient) {
+                        // Log de l'ingrédient trouvé
+                        error_log("Mise à jour de l'ingrédient ID: $ingredientId avec quantité: $quantite");
                         $recette->setQuantite($quantite);
                     }
                 }
