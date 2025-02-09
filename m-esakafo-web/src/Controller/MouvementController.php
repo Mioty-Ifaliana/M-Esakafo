@@ -181,11 +181,9 @@ class MouvementController extends AbstractController
     #[Route('/mouvement_ingredient', name: 'get_all_ingredient_movements', methods: ['GET'])]
     public function getAllIngredientMovements(MouvementRepository $mouvementRepository, IngredientRepository $ingredientRepository): JsonResponse
     {
-        // Récupérer tous les ingrédients
         $ingredients = $ingredientRepository->findAll();
         $result = [];
     
-        // Initialiser les totaux pour chaque ingrédient
         foreach ($ingredients as $ingredient) {
             $mouvements = $mouvementRepository->findBy(['ingredient' => $ingredient]);
     
@@ -201,10 +199,8 @@ class MouvementController extends AbstractController
                 }
             }
     
-            // Calculer le reste en stock
             $resteEnStock = $sommeEntre - $sommeSortie;
     
-            // Ajouter les informations à la réponse
             $result[] = [
                 'id' => $ingredient->getId(),
                 'nom' => $ingredient->getNom(),

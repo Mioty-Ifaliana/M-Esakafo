@@ -75,7 +75,7 @@ class CommandeRepository extends ServiceEntityRepository
             ->addSelect('COUNT(DISTINCT p.id) as nombrePlats')
             ->innerJoin('c.plat', 'p')
             ->where('c.statut = :statut')
-            ->setParameter('statut', 4)
+            ->setParameter('statut', 3)
             ->getQuery()
             ->getOneOrNullResult();
 
