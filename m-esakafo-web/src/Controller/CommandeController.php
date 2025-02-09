@@ -124,7 +124,7 @@ class CommandeController extends AbstractController
             // Récupérer les commandes terminées de l'utilisateur
             $commandes = $commandeRepository->findBy([
                 'userId' => $uid,
-                'statut' => 1
+                'statut' => 3
             ]);
 
             $results = [];
