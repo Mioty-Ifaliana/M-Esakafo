@@ -468,7 +468,10 @@ class CommandeController extends AbstractController
                     }
 
                     $database = $firestore->database();
-                    $logger->error('Error database');
+                    if (!$database) {
+                        $logger->error('Database could not be accessed.');
+                        return $this->json(['status' => 'error', 'message' => 'Database access failed'], 500);
+                    }
 
                     $database->collection('notifications')->add([
                         'userId' => $commande->getUser()->getId(),

@@ -11,6 +11,8 @@
         "doctrine/doctrine-migrations-bundle": "^3.4.1",
         "doctrine/orm": "^3.3.2",
         "firebase/php-jwt": "^6.11",
+        "google/cloud-firestore": "^1.41",
+        "grpc/grpc": "^1.0",
         "kreait/firebase-php": "^5.26.5",
         "nelmio/cors-bundle": "^2.5",
         "symfony/console": "7.2.*",
