@@ -1,10 +1,8 @@
 # Utiliser PHP 8.2.12 CLI
-FROM php:8.2.12-cli
+FROM php:8.2.12-fpm
 
 # Installer les dépendances système nécessaires
 RUN apt-get update && apt-get install -y \
-    libgrpc-dev \
-    && docker-php-ext-install grpc \
     zip \
     unzip \
     git \
@@ -13,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    && pecl install grpc \
+    && docker-php-ext-enable grpc \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         gd \
@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y \
         zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-    
 
 # Installer Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
