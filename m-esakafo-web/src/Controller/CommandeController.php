@@ -474,7 +474,7 @@ class CommandeController extends AbstractController
                     }
     
                     $database->collection('notifications')->add([
-                        'userId' => $commande->getUser()->getId(),
+                        'userId' => $commande->getUserId(),
                         'message' => "Votre commande est prête !",
                         'timestamp' => (new \DateTime())->format('c'),
                     ]);
@@ -491,7 +491,7 @@ class CommandeController extends AbstractController
     
         return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
     }
-    
+
     private function corsResponse(JsonResponse $response): JsonResponse
     {
         $response->headers->set('Access-Control-Allow-Origin', '*');
