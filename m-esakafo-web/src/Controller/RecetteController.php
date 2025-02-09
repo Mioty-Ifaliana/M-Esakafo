@@ -144,4 +144,44 @@ class RecetteController extends AbstractController
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
         return $response;
     }
+
+    #[Route('/recettes', name: 'list_recettes', methods: ['GET'])]
+    public function listRecettes(RecetteRepository $recetteRepository): JsonResponse
+    {
+        // Récupérer toutes les recettes
+        $recettes = $recetteRepository->findAll();
+    
+        $result = [];
+        foreach ($recettes as $recette) {
+            $plat = $recette->getPlat();
+            $ingredient = $recette->getIngredient(); // Récupérer un seul ingrédient
+    
+            // Vérifiez que le plat et l'ingrédient existent
+            if ($plat && $ingredient) {
+                $result[] = [
+                    'id' => $recette->getId(),
+                    'plat' => [
+                        'id' => $plat->getId(),
+                        'nom' => $plat->getNom(),
+                        'sprite' => $plat->getSprite(),
+                        'prix' => $plat->getPrix(),
+                        'tempsCuisson' => $plat->getTempsCuisson(),
+                    ],
+                    'ingredient' => [
+                        'id' => $ingredient->getId(),
+                        'nom' => $ingredient->getNom(),
+                        'sprite' => $ingredient->getSprite(),
+                        'unite' => [
+                            'id' => $ingredient->getUnite()->getId(),
+                            'nom' => $ingredient->getUnite()->getNom(),
+                        ],
+                        'quantite' => $recette->getQuantite(),
+                    ],
+                ];
+            }
+        }
+    
+        return $this->json($result);
+    }
 }
+
