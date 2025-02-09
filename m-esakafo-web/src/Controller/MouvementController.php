@@ -178,6 +178,47 @@ class MouvementController extends AbstractController
         }
     }
 
+    #[Route('/mouvements', name: 'get_all_ingredient_movements', methods: ['GET'])]
+    public function getAllIngredientMovements(MouvementRepository $mouvementRepository, IngredientRepository $ingredientRepository): JsonResponse
+    {
+        // Récupérer tous les ingrédients
+        $ingredients = $ingredientRepository->findAll();
+        $result = [];
+    
+        // Initialiser les totaux pour chaque ingrédient
+        foreach ($ingredients as $ingredient) {
+            $mouvements = $mouvementRepository->findBy(['ingredient' => $ingredient]);
+    
+            $sommeEntre = 0;
+            $sommeSortie = 0;
+    
+            // Calculer les sommes
+            foreach ($mouvements as $mouvement) {
+                if ($mouvement->getEntree()) {
+                    $sommeEntre += $mouvement->getEntree();
+                } elseif ($mouvement->getSortie()) {
+                    $sommeSortie += $mouvement->getSortie();
+                }
+            }
+    
+            // Calculer le reste en stock
+            $resteEnStock = $sommeEntre - $sommeSortie;
+    
+            // Ajouter les informations à la réponse
+            $result[] = [
+                'id' => $ingredient->getId(),
+                'nom' => $ingredient->getNom(),
+                'sprite' => $ingredient->getSprite(),
+                'sommeEntre' => $sommeEntre,
+                'sommeSortie' => $sommeSortie,
+                'resteEnStock' => $resteEnStock,
+            ];
+        }
+    
+        return $this->json($result);
+    }
+
+    
     #[Route('/ingredient/{ingredientId}', name: 'api_mouvements_by_ingredient', methods: ['GET'])]
     public function getByIngredient(int $ingredientId): JsonResponse
     {
