@@ -445,41 +445,41 @@ class CommandeController extends AbstractController
     
             if ($data['statut'] == 3) {
                 try {
-                     // Read the Firebase credentials from the file
-                     $firebaseCredentialsJson = $_ENV['FIREBASE_CREDENTIALS'];
-    $firebaseCredentials = json_decode($firebaseCredentialsJson, true);
-
-    // Check for JSON errors
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        $logger->error('JSON decode error: ' . json_last_error_msg());
-        return $this->json(['status' => 'error', 'message' => 'Invalid Firebase credentials'], 500);
-    }
-
+                    $firebaseCredentialsJson = $_ENV['FIREBASE_CREDENTIALS'];
+                    $firebaseCredentials = json_decode($firebaseCredentialsJson, true);
+    
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        $logger->error('JSON decode error: ' . json_last_error_msg());
+                        return $this->json(['status' => 'error', 'message' => 'Invalid Firebase credentials'], 500);
+                    }
+    
+                    $logger->info('Firebase credentials: ' . print_r($firebaseCredentials, true));
+    
                     $factory = (new Factory)->withServiceAccount($firebaseCredentials);
                     if (!$factory) {
                         $logger->error('Factory could not be created.');
                         return $this->json(['status' => 'error', 'message' => 'Factory creation failed'], 500);
                     }
-
+    
                     $firestore = $factory->createFirestore();
                     if (!$firestore) {
                         $logger->error('Firestore could not be created.');
                         return $this->json(['status' => 'error', 'message' => 'Firestore creation failed'], 500);
                     }
-
+    
                     $database = $firestore->database();
                     if (!$database) {
                         $logger->error('Database could not be accessed.');
                         return $this->json(['status' => 'error', 'message' => 'Database access failed'], 500);
                     }
-
+    
                     $database->collection('notifications')->add([
                         'userId' => $commande->getUser()->getId(),
                         'message' => "Votre commande est prête !",
                         'timestamp' => (new \DateTime())->format('c'),
                     ]);
-                    $logger->error('Error database collection');
-
+                    $logger->info('Notification added to Firestore for user ID: ' . $commande->getUser()->getId());
+    
                 } catch (\Exception $e) {
                     $logger->error('Error inserting into Firestore: ' . $e->getMessage());
                     return $this->json(['status' => 'error', 'message' => 'Erreur lors de l\'insertion dans Firestore'], 500);
@@ -491,8 +491,7 @@ class CommandeController extends AbstractController
     
         return $this->json(['status' => 'error', 'message' => 'Statut manquant dans la requête'], 400);
     }
-
-
+    
     private function corsResponse(JsonResponse $response): JsonResponse
     {
         $response->headers->set('Access-Control-Allow-Origin', '*');
