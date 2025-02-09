@@ -112,28 +112,28 @@ class RecetteController extends AbstractController
         return $response;
     }
 
-    #[Route('/plat/{platId}', name: 'api_recettes_by_plat', methods: ['GET'])]
-    public function getByPlat(int $platId, RecetteRepository $recetteRepository): JsonResponse
-    {
-        try {
-            $recettes = $recetteRepository->findByPlatId($platId);
-            $response = $this->json(array_map(
-                [$this, 'formatRecetteDetails'],
-                $recettes
-            ));
-        } catch (\Exception $e) {
-            $response = $this->json([
-                'error' => 'An error occurred while fetching recipes',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+    // #[Route('/plat/{platId}', name: 'api_recettes_by_plat', methods: ['GET'])]
+    // public function getByPlat(int $platId, RecetteRepository $recetteRepository): JsonResponse
+    // {
+    //     try {
+    //         $recettes = $recetteRepository->findByPlatId($platId);
+    //         $response = $this->json(array_map(
+    //             [$this, 'formatRecetteDetails'],
+    //             $recettes
+    //         ));
+    //     } catch (\Exception $e) {
+    //         $response = $this->json([
+    //             'error' => 'An error occurred while fetching recipes',
+    //             'message' => $e->getMessage()
+    //         ], 500);
+    //     }
 
-        $response->headers->set('Access-Control-Allow-Origin', '*');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
+    //     $response->headers->set('Access-Control-Allow-Origin', '*');
+    //     $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    //     $response->headers->set('Access-Control-Allow-Headers', 'Content-Type');
         
-        return $response;
-    }
+    //     return $response;
+    // }
 
     #[Route('', name: 'api_recettes_options', methods: ['OPTIONS'])]
     public function options(): JsonResponse
