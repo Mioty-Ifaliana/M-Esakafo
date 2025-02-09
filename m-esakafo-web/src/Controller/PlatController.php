@@ -106,9 +106,9 @@ class PlatController extends AbstractController
         if (isset($data['sprite'])) {
             $plat->setSprite($data['sprite']);
         }
-        if (isset($data['temps_cuisson'])) {     
-            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $data['temps_cuisson'])) {
-                $plat->setTempsCuisson($data['temps_cuisson']); // Stockez en tant que chaîne
+        if (isset($data['tempsCuisson'])) {     
+            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $data['tempsCuisson'])) {
+                $plat->setTempsCuisson($data['tempsCuisson']); // Stockez en tant que chaîne
             } else {
                 return $this->json(['status' => 'error', 'message' => 'Format de temps de cuisson invalide'], 400);
             }
