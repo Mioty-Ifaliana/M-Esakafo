@@ -456,10 +456,16 @@ class CommandeController extends AbstractController
     }
 
                     $factory = (new Factory)->withServiceAccount($firebaseCredentials);
-                    $logger->error('Error factory');
+                    if (!$factory) {
+                        $logger->error('Factory could not be created.');
+                        return $this->json(['status' => 'error', 'message' => 'Factory creation failed'], 500);
+                    }
 
                     $firestore = $factory->createFirestore();
-                    $logger->error('Error firestore');
+                    if (!$firestore) {
+                        $logger->error('Firestore could not be created.');
+                        return $this->json(['status' => 'error', 'message' => 'Firestore creation failed'], 500);
+                    }
 
                     $database = $firestore->database();
                     $logger->error('Error database');
