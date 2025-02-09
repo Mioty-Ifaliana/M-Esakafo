@@ -27,7 +27,7 @@ class RecetteController extends AbstractController
                 'nom' => $plat->getNom(),
                 'sprite' => $plat->getSprite(),
                 'prix' => $plat->getPrix(),
-                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null
+                'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson() : null
             ],
             'ingredient' => [
                 'id' => $ingredient->getId(),
