@@ -478,7 +478,7 @@ class CommandeController extends AbstractController
                         'message' => "Votre commande est prête !",
                         'timestamp' => (new \DateTime())->format('c'),
                     ]);
-                    $logger->info('Notification added to Firestore for user ID: ' . $commande->getUser()->getId());
+                    $logger->info('Notification added to Firestore for user ID: ' . $commande->getUserId());
     
                 } catch (\Exception $e) {
                     $logger->error('Error inserting into Firestore: ' . $e->getMessage());
