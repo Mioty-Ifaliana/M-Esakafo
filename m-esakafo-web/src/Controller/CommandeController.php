@@ -446,7 +446,7 @@ class CommandeController extends AbstractController
             if ($data['statut'] == 3) {
                 try {
                      // Read the Firebase credentials from the file
-    $firebaseCredentialsJson = file_get_contents($_ENV['FIREBASE_CREDENTIALS']);
+                     $firebaseCredentialsJson = $_ENV['FIREBASE_CREDENTIALS'];
     $firebaseCredentials = json_decode($firebaseCredentialsJson, true);
 
     // Check for JSON errors
