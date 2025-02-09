@@ -192,7 +192,7 @@ class RecetteController extends AbstractController
         return $this->json($result);
     }
 
-    #[Route('/recettes/plat/{platId}', name: 'get_recettes_by_plat', methods: ['GET'])]
+    #[Route('/plat/{platId}', name: 'get_recettes_by_plat', methods: ['GET'])]
     public function getRecettesByPlatId(int $platId, RecetteRepository $recetteRepository): JsonResponse
     {
         // Récupérer toutes les recettes pour le plat donné
