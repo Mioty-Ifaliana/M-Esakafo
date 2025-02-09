@@ -69,7 +69,7 @@ class CommandeController extends AbstractController
                 'id' => $plat->getId(),
                 'nom' => $plat->getNom(),
                 'sprite' => $plat->getSprite(),
-                'tempsCuisson' => $plat && $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+                'tempsCuisson' => $plat && $plat->getTempsCuisson() ? $plat->getTempsCuisson() : null,
             ] : null,
             'quantite' => $commande->getQuantite(),
             'numeroTicket' => $commande->getNumeroTicket(),
