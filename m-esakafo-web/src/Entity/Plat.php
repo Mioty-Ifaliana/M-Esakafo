@@ -25,9 +25,9 @@ class Plat
     #[Groups(['plat:read', 'commande:read'])]
     private ?string $sprite = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: 'string')]
     #[Groups(['plat:read', 'commande:read'])]
-    private ?\DateTimeInterface $tempsCuisson = null;
+    private ?string $tempsCuisson = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Groups(['plat:read', 'commande:read'])]
@@ -60,12 +60,12 @@ class Plat
         return $this;
     }
 
-    public function getTempsCuisson(): ?\DateTimeInterface
+    public function getTempsCuisson(): ?string
     {
         return $this->tempsCuisson;
     }
 
-    public function setTempsCuisson(?\DateTimeInterface $tempsCuisson): static
+    public function setTempsCuisson(?string $tempsCuisson): static
     {
         $this->tempsCuisson = $tempsCuisson;
         return $this;

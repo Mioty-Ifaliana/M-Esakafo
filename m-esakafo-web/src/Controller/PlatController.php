@@ -46,7 +46,7 @@ class PlatController extends AbstractController
             'id' => $plat->getId(),
             'nom' => $plat->getNom(),
             'sprite' => $plat->getSprite(),
-            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson() : null,
             'prix' => $plat->getPrix()
         ]);
         
@@ -69,8 +69,11 @@ class PlatController extends AbstractController
         $plat->setPrix($data['prix']);
         
         if (isset($data['tempsCuisson'])) {
-            $tempsCuisson = new \DateTime($data['tempsCuisson']);
-            $plat->setTempsCuisson($tempsCuisson);
+            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $data['tempsCuisson'])) {
+                $plat->setTempsCuisson($data['tempsCuisson']); // Stockez en tant que chaîne
+            } else {
+                return $this->json(['status' => 'error', 'message' => 'Format de temps de cuisson invalide'], 400);
+            }
         }
         
         $entityManager->persist($plat);
@@ -80,7 +83,7 @@ class PlatController extends AbstractController
             'id' => $plat->getId(),
             'nom' => $plat->getNom(),
             'sprite' => $plat->getSprite(),
-            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson()->format('H:i:s') : null,
+            'tempsCuisson' => $plat->getTempsCuisson() ? $plat->getTempsCuisson() : null,
             'prix' => $plat->getPrix()
         ], 201);
         
@@ -103,13 +106,13 @@ class PlatController extends AbstractController
         if (isset($data['sprite'])) {
             $plat->setSprite($data['sprite']);
         }
-        if (isset($data['temps_cuisson'])) {
-            $tempsCuisson = \DateTime::createFromFormat('H:i:s', $data['temps_cuisson']);
-            if ($tempsCuisson === false) {
+        if (isset($data['temps_cuisson'])) {     
+            if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $data['temps_cuisson'])) {
+                $plat->setTempsCuisson($data['temps_cuisson']); // Stockez en tant que chaîne
+            } else {
                 return $this->json(['status' => 'error', 'message' => 'Format de temps de cuisson invalide'], 400);
             }
-            $plat->setTempsCuisson($tempsCuisson);
-        }
+                }
         if (isset($data['prix'])) {
             $plat->setPrix($data['prix']);
         }
