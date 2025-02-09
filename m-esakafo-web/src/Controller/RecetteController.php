@@ -145,7 +145,7 @@ class RecetteController extends AbstractController
         return $response;
     }
 
-    #[Route('/recettes', name: 'list_recettes', methods: ['GET'])]
+    #[Route('/listV2', name: 'list_recettes', methods: ['GET'])]
     public function listRecettes(RecetteRepository $recetteRepository): JsonResponse
     {
         // Récupérer toutes les recettes
@@ -172,7 +172,6 @@ class RecetteController extends AbstractController
                     ];
                 }
     
-                // Ajouter l'ingrédient au tableau des ingrédients pour ce plat
                 if ($ingredient) {
                     $result[$platId]['ingredients'][] = [
                         'id' => $ingredient->getId(),
@@ -188,10 +187,10 @@ class RecetteController extends AbstractController
             }
         }
     
-        // Réindexer le tableau pour obtenir un tableau simple
         $result = array_values($result);
     
         return $this->json($result);
     }
+
 }
 

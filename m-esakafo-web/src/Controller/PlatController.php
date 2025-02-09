@@ -103,8 +103,8 @@ class PlatController extends AbstractController
         if (isset($data['sprite'])) {
             $plat->setSprite($data['sprite']);
         }
-        if (isset($data['temps_cuisson'])) {
-            $plat->setTempsCuisson(new \DateTime($data['temps_cuisson']));
+        if (isset($data['temps_cuisson'])) {     
+            $plat->setTempsCuisson( \DateTime::createFromFormat('H:i:s', $data['temps_cuisson']));
         }
         if (isset($data['prix'])) {
             $plat->setPrix($data['prix']);
