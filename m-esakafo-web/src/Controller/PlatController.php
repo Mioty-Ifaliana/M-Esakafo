@@ -100,6 +100,9 @@ class PlatController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         
+        // Log des données reçues
+        error_log(print_r($data, true));
+    
         if (isset($data['nom'])) {
             $plat->setNom($data['nom']);
         }
@@ -112,13 +115,16 @@ class PlatController extends AbstractController
             } else {
                 return $this->json(['status' => 'error', 'message' => 'Format de temps de cuisson invalide'], 400);
             }
-                }
+        }
         if (isset($data['prix'])) {
             $plat->setPrix($data['prix']);
         }
-
+    
         $entityManager->flush();
-
+    
+        // Log de l'objet plat après mise à jour
+        error_log(print_r($plat, true));
+    
         $response = $this->json($plat);
         
         // Ajouter les headers CORS
@@ -128,7 +134,7 @@ class PlatController extends AbstractController
         
         return $response;
     }
-
+    
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(Plat $plat, EntityManagerInterface $entityManager): JsonResponse
     {
