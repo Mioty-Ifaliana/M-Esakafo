@@ -157,17 +157,24 @@ class RecetteController extends AbstractController
             $ingredient = $recette->getIngredient(); // Récupérer un seul ingrédient
     
             // Vérifiez que le plat et l'ingrédient existent
-            if ($plat && $ingredient) {
-                $result[] = [
-                    'id' => $recette->getId(),
-                    'plat' => [
-                        'id' => $plat->getId(),
+            if ($plat) {
+                $platId = $plat->getId();
+    
+                // Si le plat n'est pas encore dans le résultat, l'ajouter
+                if (!isset($result[$platId])) {
+                    $result[$platId] = [
+                        'id' => $platId,
                         'nom' => $plat->getNom(),
                         'sprite' => $plat->getSprite(),
                         'prix' => $plat->getPrix(),
                         'tempsCuisson' => $plat->getTempsCuisson(),
-                    ],
-                    'ingredient' => [
+                        'ingredients' => []
+                    ];
+                }
+    
+                // Ajouter l'ingrédient au tableau des ingrédients pour ce plat
+                if ($ingredient) {
+                    $result[$platId]['ingredients'][] = [
                         'id' => $ingredient->getId(),
                         'nom' => $ingredient->getNom(),
                         'sprite' => $ingredient->getSprite(),
@@ -176,10 +183,13 @@ class RecetteController extends AbstractController
                             'nom' => $ingredient->getUnite()->getNom(),
                         ],
                         'quantite' => $recette->getQuantite(),
-                    ],
-                ];
+                    ];
+                }
             }
         }
+    
+        // Réindexer le tableau pour obtenir un tableau simple
+        $result = array_values($result);
     
         return $this->json($result);
     }
